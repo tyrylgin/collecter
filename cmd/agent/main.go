@@ -30,8 +30,8 @@ func main() {
 	pollTicker := time.NewTicker(*pollInterval)
 	reportTicker := time.NewTicker(*reportInterval)
 
-	cancelSignal := make(chan os.Signal, 1)
-	signal.Notify(cancelSignal, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	stopSignal := make(chan os.Signal, 1)
+	signal.Notify(stopSignal, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
 	// Create and register custom metrics
 	pollCounter := metrics.NewCounter()
@@ -72,7 +72,7 @@ func main() {
 					return
 				}
 			})
-		case <-cancelSignal:
+		case <-stopSignal:
 			os.Exit(0)
 		}
 	}
