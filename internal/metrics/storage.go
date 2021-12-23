@@ -30,6 +30,12 @@ func Register(name string, i interface{}) {
 	}
 }
 
+func Get(name string) Metric {
+	DefaultStorage.mutex.RLock()
+	defer DefaultStorage.mutex.RUnlock()
+	return DefaultStorage.metrics[name]
+}
+
 func Each(f func(string, Metric)) {
 	DefaultStorage.mutex.RLock()
 	defer DefaultStorage.mutex.RUnlock()
