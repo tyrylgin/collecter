@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/tyrylgin/collecter/internal/handlers"
 )
 
 type Server struct {
@@ -15,7 +17,7 @@ type Server struct {
 func (config *Server) Start(ctx context.Context) error {
 	log.Printf("start server on %s:%s", config.Hostname, config.Port)
 
-	http.HandleFunc("/update/", func(w http.ResponseWriter, r *http.Request) {})
+	http.HandleFunc("/update/", handlers.ReceiveMetricsHandler())
 
 	srv := &http.Server{
 		Addr: fmt.Sprintf("%s:%s", config.Hostname, config.Port),
