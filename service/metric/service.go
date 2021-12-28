@@ -24,6 +24,7 @@ type Processor interface {
 	SetGauge(ctx context.Context, name string, value float64) error
 	IncreaseCounter(ctx context.Context, name string, value int64) error
 	GetAll(ctx context.Context) map[string]model.Metric
+	Get(ctx context.Context, name string, metricType *model.MetricType) (model.Metric, error)
 }
 
 func (srv Service) SetGauge(ctx context.Context, name string, value float64) error {
@@ -72,4 +73,14 @@ func (srv Service) IncreaseCounter(ctx context.Context, name string, value int64
 
 func (srv Service) GetAll(ctx context.Context) map[string]model.Metric {
 	return srv.metricStore.GetAll(ctx)
+}
+
+func (srv Service) Get(ctx context.Context, name string, metricType *model.MetricType) (model.Metric, error) {
+	metric := srv.metricStore.GetByName(ctx, name)
+
+	if metric != nil && metricType != nil && metric.Type() != *metricType {
+		return nil, fmt.Errorf("metric with name %s has different type %s", name, metric.Type())
+	}
+
+	return metric, nil
 }

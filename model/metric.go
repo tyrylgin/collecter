@@ -1,5 +1,7 @@
 package model
 
+import "fmt"
+
 type MetricType string
 
 const (
@@ -9,4 +11,13 @@ const (
 
 type Metric interface {
 	Type() MetricType
+}
+
+func (t MetricType) Validate() error {
+	switch t {
+	case MetricTypeCounter, MetricTypeGauge:
+		return nil
+	default:
+		return fmt.Errorf("unknown MetricType: %s", t)
+	}
 }
