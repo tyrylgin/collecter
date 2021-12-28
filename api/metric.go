@@ -96,7 +96,6 @@ func (h *metricHandler) getAll(w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Strings(metricNames)
 
-	var err error
 	var metricsResp string
 	for _, metricName := range metricNames {
 		switch metrics[metricName].Type() {
@@ -104,11 +103,6 @@ func (h *metricHandler) getAll(w http.ResponseWriter, r *http.Request) {
 			metricsResp += fmt.Sprintf("%v %v\n", metricName, metrics[metricName].(model.Counter).Count())
 		case model.MetricTypeGauge:
 			metricsResp += fmt.Sprintf("%v %v\n", metricName, metrics[metricName].(model.Gauge).Value())
-		}
-
-		if err != nil {
-			http.Error(w, "can't write response", http.StatusInternalServerError)
-			return
 		}
 	}
 
