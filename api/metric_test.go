@@ -30,10 +30,12 @@ func Test_metricHandler_getAll(t *testing.T) {
 	defer ts.Close()
 
 	resp, body := testRequest(t, ts, "GET", "/")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "m1 0\nm2 0\n", body)
 
 	resp, body = testRequest(t, ts, "GET", "/")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	assert.Equal(t, "no metric registered yet\n", body)
 }
@@ -52,22 +54,27 @@ func Test_metricHandler_getMetricValue(t *testing.T) {
 	defer ts.Close()
 
 	resp, body := testRequest(t, ts, "GET", "/value/counter/m1")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "0", body)
 
 	resp, body = testRequest(t, ts, "GET", "/value/unknown/m2")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusNotImplemented, resp.StatusCode)
 	assert.Equal(t, "wrong metric type\n", body)
 
 	resp, body = testRequest(t, ts, "GET", "/value/counter/m2")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	assert.Equal(t, "failed to get metric\n", body)
 
 	resp, body = testRequest(t, ts, "GET", "/value/counter/m3")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	assert.Equal(t, "metric not found\n", body)
 
 	resp, body = testRequest(t, ts, "GET", "/value/gauge/m4")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "0", body)
 }
@@ -84,28 +91,36 @@ func Test_metricHandler_processMetric(t *testing.T) {
 	defer ts.Close()
 
 	resp, _ := testRequest(t, ts, "POST", "/update/counter/m1/1")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	resp, _ = testRequest(t, ts, "POST", "/update/unknown/m1/1")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusNotImplemented, resp.StatusCode)
 
 	resp, _ = testRequest(t, ts, "POST", "/update/counter/m1/87yw")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	resp, body := testRequest(t, ts, "POST", "/update/counter/m2/3")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	assert.Equal(t, "failed to set counter value\n", body)
 
 	resp, _ = testRequest(t, ts, "POST", "/update/gauge/m1/1")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	resp, _ = testRequest(t, ts, "POST", "/update/unknown/m1/1")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusNotImplemented, resp.StatusCode)
 
 	resp, _ = testRequest(t, ts, "POST", "/update/gauge/m1/87yw")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	resp, body = testRequest(t, ts, "POST", "/update/gauge/m2/3")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	assert.Equal(t, "failed to set counter value\n", body)
 }
@@ -119,12 +134,12 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatalf("error during http request execution")
+		log.Fatal("error during http request execution")
 	}
-	defer resp.Body.Close()
 	require.NoError(t, err)
 
 	respBody, err := ioutil.ReadAll(resp.Body)
+
 	require.NoError(t, err)
 
 	return resp, string(respBody)
