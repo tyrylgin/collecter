@@ -28,7 +28,7 @@ func (h MetricHandler) HandleMetricRecord(ctx context.Context) http.HandlerFunc 
 		pathFragments := strings.Split(strings.TrimPrefix(r.URL.Path, "/update/"), "/")
 
 		if len(pathFragments) < 3 {
-			http.Error(rw, "wrong update metric url, must be /update/<type>/<name>/<value>", http.StatusBadRequest)
+			http.Error(rw, "wrong update metric url, must be /update/<type>/<name>/<value>", http.StatusNotFound)
 			return
 		}
 
@@ -59,7 +59,7 @@ func (h MetricHandler) HandleMetricRecord(ctx context.Context) http.HandlerFunc 
 				return
 			}
 		default:
-			http.Error(rw, "wrong metric type", http.StatusBadRequest)
+			http.Error(rw, "wrong metric type", http.StatusNotImplemented)
 			return
 		}
 
