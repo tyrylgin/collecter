@@ -61,24 +61,6 @@ func TestService_IncreaseCounter(t *testing.T) {
 	require.NoError(t, err, "save new counter if name not occupied")
 }
 
-func TestService_SetCounter(t *testing.T) {
-	s := storagemock.NewMockMetricStorer(gomock.NewController(t))
-	s.EXPECT().Get("m1").Return(&model.DefaultCounter{})
-	s.EXPECT().Get("m2").Return(&model.DefaultGauge{})
-	s.EXPECT().Get("m3").Return(nil)
-	s.EXPECT().Save("m3", gomock.Any()).Return(nil)
-	p := NewProcessor(s)
-
-	err := p.SetCounter("m1", 1)
-	require.NoError(t, err)
-
-	err = p.SetCounter("m2", 1)
-	require.Errorf(t, err, "error if trying set gauge")
-
-	err = p.SetCounter("m3", 1)
-	require.NoError(t, err, "save new counter if name not occupied")
-}
-
 func TestService_SetGauge(t *testing.T) {
 	s := storagemock.NewMockMetricStorer(gomock.NewController(t))
 	s.EXPECT().Get("m1").Return(&model.DefaultGauge{})

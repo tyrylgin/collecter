@@ -33,7 +33,7 @@ func (h *metricHandler) processMetric(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "failed to parse counter value", http.StatusBadRequest)
 			return
 		}
-		if err = h.metricService.SetCounter(name, intValue); err != nil {
+		if err = h.metricService.IncreaseCounter(name, intValue); err != nil {
 			http.Error(w, "failed to set counter value", http.StatusInternalServerError)
 			return
 		}

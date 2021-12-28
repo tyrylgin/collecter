@@ -73,8 +73,8 @@ func Test_metricHandler_getMetricValue(t *testing.T) {
 
 func Test_metricHandler_processMetric(t *testing.T) {
 	mock := metricmock.NewMockProcessor(gomock.NewController(t))
-	mock.EXPECT().SetCounter("m1", gomock.Any()).Return(nil)
-	mock.EXPECT().SetCounter("m2", gomock.Any()).Return(errors.New("some error"))
+	mock.EXPECT().IncreaseCounter("m1", gomock.Any()).Return(nil)
+	mock.EXPECT().IncreaseCounter("m2", gomock.Any()).Return(errors.New("some error"))
 	mock.EXPECT().SetGauge("m1", gomock.Any()).Return(nil)
 	mock.EXPECT().SetGauge("m2", gomock.Any()).Return(errors.New("some error"))
 	rest := &Rest{metricHandler{metricService: mock}}
