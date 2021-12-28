@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -117,6 +118,9 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Fatalf("error during http request execution")
+	}
 	defer resp.Body.Close()
 	require.NoError(t, err)
 
