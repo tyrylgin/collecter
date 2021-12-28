@@ -1,15 +1,29 @@
-package handlers
+package server
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/tyrylgin/collecter/internal/metrics"
-	"github.com/tyrylgin/collecter/internal/storage"
+	"github.com/tyrylgin/collecter/model"
+	"github.com/tyrylgin/collecter/service/metric"
 )
 
-func ReceiveMetricsHandler() http.HandlerFunc {
+type MetricHandler struct {
+	metricSrv metric.Processor
+}
+
+func NewMetricHandler(metricSrv metric.Processor) (*MetricHandler, error) {
+	if metricSrv == nil {
+		return nil, fmt.Errorf("metric.Processor: nil")
+	}
+
+	return &MetricHandler{metricSrv: metricSrv}, nil
+}
+
+func (h MetricHandler) HandleMetricRecord(ctx context.Context) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		pathFragments := strings.Split(strings.TrimPrefix(r.URL.Path, "/update/"), "/")
 
@@ -25,23 +39,29 @@ func ReceiveMetricsHandler() http.HandlerFunc {
 			return
 		}
 
-		switch metrics.MetricType(metricType) {
-		case metrics.MetricTypeCounter:
+		switch model.MetricType(metricType) {
+		case model.MetricTypeCounter:
 			counterValue, err := strconv.ParseInt(pathFragments[2], 10, 64)
 			if err != nil {
 				http.Error(rw, "failed to parse counter value", http.StatusBadRequest)
 				return
 			}
 
-			storage.StoreCounter(metricName, counterValue)
-		case metrics.MetricTypeGauge:
+			if err := h.metricSrv.IncreaseCounter(ctx, metricName, counterValue); err != nil {
+				http.Error(rw, "failed to save counter value", http.StatusInternalServerError)
+				return
+			}
+		case model.MetricTypeGauge:
 			gaugeValue, err := strconv.ParseFloat(pathFragments[2], 64)
 			if err != nil {
 				http.Error(rw, "failed to parse gauge value", http.StatusBadRequest)
 				return
 			}
 
-			storage.StoreGauge(metricName, gaugeValue)
+			if err := h.metricSrv.SetGauge(ctx, metricName, gaugeValue); err != nil {
+				http.Error(rw, "failed to save gauge value", http.StatusInternalServerError)
+				return
+			}
 		default:
 			http.Error(rw, "wrong metric type", http.StatusBadRequest)
 			return

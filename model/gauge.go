@@ -1,4 +1,4 @@
-package metrics
+package model
 
 type Gauge interface {
 	Set(float64)
