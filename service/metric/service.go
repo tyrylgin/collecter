@@ -2,7 +2,6 @@
 package metric
 
 import (
-	"context"
 	"errors"
 	"fmt"
 
@@ -11,51 +10,44 @@ import (
 )
 
 type Service struct {
-	metricStore storage.MetricStorer
+	store storage.MetricStorer
 }
 
-func NewProcessor(storage storage.MetricStorer) *Service {
-	srv := &Service{}
-	srv.metricStore = storage
-	return srv
+func NewProcessor(store storage.MetricStorer) *Service {
+	return &Service{
+		store: store,
+	}
 }
 
 type Processor interface {
-	SetGauge(ctx context.Context, name string, value float64) error
-	IncreaseCounter(ctx context.Context, name string, value int64) error
-	GetAll(ctx context.Context) map[string]model.Metric
-	Get(ctx context.Context, name string, metricType *model.MetricType) (model.Metric, error)
+	Get(name string, metricType *model.MetricType) (model.Metric, error)
+	GetAll() map[string]model.Metric
+	IncreaseCounter(name string, value int64) error
+	SetCounter(name string, value int64) error
+	SetGauge(name string, value float64) error
 }
 
-func (srv Service) SetGauge(ctx context.Context, name string, value float64) error {
-	metric := srv.metricStore.GetByName(ctx, name)
+func (s *Service) Get(name string, metricType *model.MetricType) (model.Metric, error) {
+	metric := s.store.Get(name)
 
-	if metric == nil {
-		newGauge := model.NewGauge()
-		newGauge.Set(value)
-		err := srv.metricStore.Save(ctx, name, newGauge.(model.Metric))
-		if err != nil {
-			return fmt.Errorf("can't save new gauge metric, %w", err)
-		}
-		return nil
+	if metric != nil && metricType != nil && metric.Type() != *metricType {
+		return nil, fmt.Errorf("metric with name %s has different type %s", name, metric.Type())
 	}
 
-	if metric.Type() != model.MetricTypeGauge {
-		return errors.New("the metric with same name already exist and has different type than MetricTypeGauge")
-	}
-
-	metric.(model.Gauge).Set(value)
-
-	return nil
+	return metric, nil
 }
 
-func (srv Service) IncreaseCounter(ctx context.Context, name string, value int64) error {
-	metric := srv.metricStore.GetByName(ctx, name)
+func (s *Service) GetAll() map[string]model.Metric {
+	return s.store.GetAll()
+}
+
+func (s *Service) IncreaseCounter(name string, value int64) error {
+	metric := s.store.Get(name)
 
 	if metric == nil {
-		newGauge := model.NewCounter()
-		newGauge.Increase(value)
-		err := srv.metricStore.Save(ctx, name, newGauge.(model.Metric))
+		newCounter := model.NewCounter()
+		newCounter.Increase(value)
+		err := s.store.Save(name, newCounter.(model.Metric))
 		if err != nil {
 			return fmt.Errorf("can't save new counter metric, %w", err)
 		}
@@ -71,16 +63,47 @@ func (srv Service) IncreaseCounter(ctx context.Context, name string, value int64
 	return nil
 }
 
-func (srv Service) GetAll(ctx context.Context) map[string]model.Metric {
-	return srv.metricStore.GetAll(ctx)
-}
+func (s *Service) SetCounter(name string, value int64) error {
+	metric := s.store.Get(name)
 
-func (srv Service) Get(ctx context.Context, name string, metricType *model.MetricType) (model.Metric, error) {
-	metric := srv.metricStore.GetByName(ctx, name)
-
-	if metric != nil && metricType != nil && metric.Type() != *metricType {
-		return nil, fmt.Errorf("metric with name %s has different type %s", name, metric.Type())
+	if metric == nil {
+		newCounter := model.NewCounter()
+		newCounter.Set(value)
+		err := s.store.Save(name, newCounter.(model.Metric))
+		if err != nil {
+			return fmt.Errorf("can't save new counter metric, %w", err)
+		}
+		return nil
 	}
 
-	return metric, nil
+	if metric.Type() != model.MetricTypeCounter {
+		return errors.New("the metric with same name already exist and has different type than MetricTypeCounter")
+	}
+
+	counter := metric.(model.Counter)
+	counter.Set(value)
+
+	return nil
+}
+
+func (s *Service) SetGauge(name string, value float64) error {
+	metric := s.store.Get(name)
+
+	if metric == nil {
+		newGauge := model.NewGauge()
+		newGauge.Set(value)
+		err := s.store.Save(name, newGauge.(model.Metric))
+		if err != nil {
+			return fmt.Errorf("can't save new gauge metric, %w", err)
+		}
+		return nil
+	}
+
+	if metric.Type() != model.MetricTypeGauge {
+		return errors.New("the metric with same name already exist and has different type than MetricTypeGauge")
+	}
+
+	metric.(model.Gauge).Set(value)
+
+	return nil
 }

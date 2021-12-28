@@ -5,7 +5,6 @@
 package metricmock
 
 import (
-	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -35,44 +34,73 @@ func (m *MockProcessor) EXPECT() *MockProcessorMockRecorder {
 	return m.recorder
 }
 
-// GetAll mocks base method.
-func (m *MockProcessor) GetAll(ctx context.Context) map[string]model.Metric {
+// Get mocks base method.
+func (m *MockProcessor) Get(name string, metricType *model.MetricType) (model.Metric, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAll", ctx)
+	ret := m.ctrl.Call(m, "Get", name, metricType)
+	ret0, _ := ret[0].(model.Metric)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Get indicates an expected call of Get.
+func (mr *MockProcessorMockRecorder) Get(name, metricType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockProcessor)(nil).Get), name, metricType)
+}
+
+// GetAll mocks base method.
+func (m *MockProcessor) GetAll() map[string]model.Metric {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAll")
 	ret0, _ := ret[0].(map[string]model.Metric)
 	return ret0
 }
 
 // GetAll indicates an expected call of GetAll.
-func (mr *MockProcessorMockRecorder) GetAll(ctx interface{}) *gomock.Call {
+func (mr *MockProcessorMockRecorder) GetAll() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockProcessor)(nil).GetAll), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockProcessor)(nil).GetAll))
 }
 
 // IncreaseCounter mocks base method.
-func (m *MockProcessor) IncreaseCounter(ctx context.Context, name string, value int64) error {
+func (m *MockProcessor) IncreaseCounter(name string, value int64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IncreaseCounter", ctx, name, value)
+	ret := m.ctrl.Call(m, "IncreaseCounter", name, value)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // IncreaseCounter indicates an expected call of IncreaseCounter.
-func (mr *MockProcessorMockRecorder) IncreaseCounter(ctx, name, value interface{}) *gomock.Call {
+func (mr *MockProcessorMockRecorder) IncreaseCounter(name, value interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncreaseCounter", reflect.TypeOf((*MockProcessor)(nil).IncreaseCounter), ctx, name, value)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncreaseCounter", reflect.TypeOf((*MockProcessor)(nil).IncreaseCounter), name, value)
+}
+
+// SetCounter mocks base method.
+func (m *MockProcessor) SetCounter(name string, value int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetCounter", name, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetCounter indicates an expected call of SetCounter.
+func (mr *MockProcessorMockRecorder) SetCounter(name, value interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCounter", reflect.TypeOf((*MockProcessor)(nil).SetCounter), name, value)
 }
 
 // SetGauge mocks base method.
-func (m *MockProcessor) SetGauge(ctx context.Context, name string, value float64) error {
+func (m *MockProcessor) SetGauge(name string, value float64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetGauge", ctx, name, value)
+	ret := m.ctrl.Call(m, "SetGauge", name, value)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetGauge indicates an expected call of SetGauge.
-func (mr *MockProcessorMockRecorder) SetGauge(ctx, name, value interface{}) *gomock.Call {
+func (mr *MockProcessorMockRecorder) SetGauge(name, value interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetGauge", reflect.TypeOf((*MockProcessor)(nil).SetGauge), ctx, name, value)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetGauge", reflect.TypeOf((*MockProcessor)(nil).SetGauge), name, value)
 }

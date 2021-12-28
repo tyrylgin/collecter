@@ -1,8 +1,6 @@
 package metric
 
 import (
-	"context"
-	"errors"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -13,65 +11,88 @@ import (
 )
 
 func TestNewProcessor(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	s := storagemock.NewMockMetricStorer(ctrl)
+	s := storagemock.NewMockMetricStorer(gomock.NewController(t))
+	assert.Equal(t, &Service{store: s}, NewProcessor(s))
+}
 
-	assert.Equal(t, &Service{metricStore: s}, NewProcessor(s))
+func TestService_Get(t *testing.T) {
+	s := storagemock.NewMockMetricStorer(gomock.NewController(t))
+	s.EXPECT().Get("m1").AnyTimes().Return(&model.DefaultGauge{})
+	p := NewProcessor(s)
+
+	m, err := p.Get("m1", nil)
+	require.NoError(t, err)
+	assert.Equal(t, &model.DefaultGauge{}, m)
+
+	typeCounter := model.MetricTypeCounter
+	m, err = p.Get("m1", &typeCounter)
+	require.Error(t, err)
+	assert.Nil(t, m)
 }
 
 func TestService_GetAll(t *testing.T) {
-	ctx := context.TODO()
-
-	expected := map[string]model.Metric{
-		"m1": &model.DefaultGauge{},
-		"m2": &model.DefaultCounter{},
+	exp := map[string]model.Metric{
+		"m1": &model.DefaultCounter{},
+		"m2": &model.DefaultGauge{},
 	}
 
-	ctrl := gomock.NewController(t)
-	s := storagemock.NewMockMetricStorer(ctrl)
-	s.EXPECT().GetAll(ctx).Return(expected)
-
+	s := storagemock.NewMockMetricStorer(gomock.NewController(t))
+	s.EXPECT().GetAll().Return(exp)
 	p := NewProcessor(s)
 
-	assert.Equal(t, expected, p.GetAll(ctx))
+	assert.Equal(t, exp, p.GetAll())
 }
 
 func TestService_IncreaseCounter(t *testing.T) {
-	ctx := context.TODO()
-
-	ctrl := gomock.NewController(t)
-	s := storagemock.NewMockMetricStorer(ctrl)
+	s := storagemock.NewMockMetricStorer(gomock.NewController(t))
+	s.EXPECT().Get("m1").Return(&model.DefaultCounter{})
+	s.EXPECT().Get("m2").Return(&model.DefaultGauge{})
+	s.EXPECT().Get("m3").Return(nil)
+	s.EXPECT().Save("m3", gomock.Any()).Return(nil)
 	p := NewProcessor(s)
 
-	s.EXPECT().GetByName(ctx, gomock.Eq("m1")).Return(nil)
-	s.EXPECT().Save(ctx, gomock.Eq("m1"), gomock.Any()).Return(nil)
-
-	err := p.IncreaseCounter(ctx, "m1", 1)
+	err := p.IncreaseCounter("m1", 1)
 	require.NoError(t, err)
 
-	s.EXPECT().GetByName(ctx, gomock.Eq("m1")).Return(nil)
-	s.EXPECT().Save(ctx, gomock.Eq("m1"), gomock.Any()).Return(errors.New("save error"))
+	err = p.IncreaseCounter("m2", 1)
+	require.Errorf(t, err, "error if trying increase gauge")
 
-	err = p.IncreaseCounter(ctx, "m1", 1)
-	require.Error(t, err)
+	err = p.IncreaseCounter("m3", 1)
+	require.NoError(t, err, "save new counter if name not occupied")
+}
+
+func TestService_SetCounter(t *testing.T) {
+	s := storagemock.NewMockMetricStorer(gomock.NewController(t))
+	s.EXPECT().Get("m1").Return(&model.DefaultCounter{})
+	s.EXPECT().Get("m2").Return(&model.DefaultGauge{})
+	s.EXPECT().Get("m3").Return(nil)
+	s.EXPECT().Save("m3", gomock.Any()).Return(nil)
+	p := NewProcessor(s)
+
+	err := p.SetCounter("m1", 1)
+	require.NoError(t, err)
+
+	err = p.SetCounter("m2", 1)
+	require.Errorf(t, err, "error if trying set gauge")
+
+	err = p.SetCounter("m3", 1)
+	require.NoError(t, err, "save new counter if name not occupied")
 }
 
 func TestService_SetGauge(t *testing.T) {
-	ctx := context.TODO()
-
-	ctrl := gomock.NewController(t)
-	s := storagemock.NewMockMetricStorer(ctrl)
+	s := storagemock.NewMockMetricStorer(gomock.NewController(t))
+	s.EXPECT().Get("m1").Return(&model.DefaultGauge{})
+	s.EXPECT().Get("m2").Return(&model.DefaultCounter{})
+	s.EXPECT().Get("m3").Return(nil)
+	s.EXPECT().Save("m3", gomock.Any()).Return(nil)
 	p := NewProcessor(s)
 
-	s.EXPECT().GetByName(ctx, gomock.Eq("m1")).Return(nil)
-	s.EXPECT().Save(ctx, gomock.Eq("m1"), gomock.Any()).Return(nil)
-
-	err := p.SetGauge(ctx, "m1", 1)
+	err := p.SetGauge("m1", 1)
 	require.NoError(t, err)
 
-	s.EXPECT().GetByName(ctx, gomock.Eq("m1")).Return(nil)
-	s.EXPECT().Save(ctx, gomock.Eq("m1"), gomock.Any()).Return(errors.New("save error"))
+	err = p.SetGauge("m2", 1)
+	require.Errorf(t, err, "error if trying set counter")
 
-	err = p.SetGauge(ctx, "m1", 1)
-	require.Error(t, err)
+	err = p.SetGauge("m3", 1)
+	require.NoError(t, err, "save new gauge if name not occupied")
 }

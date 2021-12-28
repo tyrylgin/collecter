@@ -2,13 +2,11 @@
 package storage
 
 import (
-	"context"
-
 	"github.com/tyrylgin/collecter/model"
 )
 
 type MetricStorer interface {
-	GetAll(ctx context.Context) map[string]model.Metric
-	GetByName(ctx context.Context, name string) model.Metric
-	Save(ctx context.Context, name string, metric model.Metric) error
+	Get(name string) model.Metric
+	GetAll() map[string]model.Metric
+	Save(name string, metric model.Metric) error
 }

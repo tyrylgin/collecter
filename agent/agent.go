@@ -29,9 +29,9 @@ func (srv Service) Start(ctx context.Context) {
 	for {
 		select {
 		case <-pollTicker.C:
-			srv.SnapshotMetrics(ctx)
+			srv.SnapshotMetrics()
 		case <-reportTicker.C:
-			srv.SendMetrics(ctx)
+			srv.SendMetrics()
 		case <-ctx.Done():
 			pollTicker.Stop()
 			reportTicker.Stop()
@@ -44,26 +44,26 @@ type Agent interface {
 	SendMetrics(ctx context.Context) error
 }
 
-func (srv Service) SnapshotMetrics(ctx context.Context) {
+func (srv Service) SnapshotMetrics() {
 	rand.Seed(time.Now().UnixNano())
-	if err := srv.MetricSrv.SetGauge(ctx, "RandomValue", rand.Float64()); err != nil {
+	if err := srv.MetricSrv.SetGauge("RandomValue", rand.Float64()); err != nil {
 		log.Println(err)
 	}
 
-	if err := srv.MetricSrv.IncreaseCounter(ctx, "PollCount", 1); err != nil {
+	if err := srv.MetricSrv.IncreaseCounter("PollCount", 1); err != nil {
 		log.Println(err)
 	}
 
 	memStat := memstat.GetRuntimeMemstat()
 	for name, value := range memStat {
-		if err := srv.MetricSrv.SetGauge(ctx, name, value); err != nil {
+		if err := srv.MetricSrv.SetGauge(name, value); err != nil {
 			log.Println(err)
 		}
 	}
 }
 
-func (srv Service) SendMetrics(ctx context.Context) {
-	metrics := srv.MetricSrv.GetAll(ctx)
+func (srv Service) SendMetrics() {
+	metrics := srv.MetricSrv.GetAll()
 
 	for name, metric := range metrics {
 		metricLogString := fmt.Sprintf("%s/%s/", metric.Type(), name)

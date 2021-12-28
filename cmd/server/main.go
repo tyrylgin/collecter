@@ -8,9 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/tyrylgin/collecter/server"
-	"github.com/tyrylgin/collecter/service/metric"
-	"github.com/tyrylgin/collecter/storage/mem"
+	"github.com/tyrylgin/collecter/api"
+	"github.com/tyrylgin/collecter/storage/memstore"
 )
 
 var (
@@ -30,18 +29,10 @@ func main() {
 		os.Exit(0)
 	}()
 
-	store := mem.NewStorage()
-	metricHandler, err := server.NewMetricHandler(metric.NewProcessor(&store))
-	if err != nil {
-		log.Fatalf("failed metric handler init, %v", err)
-	}
-
-	srv := server.Rest{
-		Hostname:      *hostname,
-		Port:          *port,
-		MetricHandler: *metricHandler,
-	}
-	if err := srv.Run(ctx); err != nil {
+	store := memstore.NewStorage()
+	srv := api.Rest{}
+	srv.WithStorage(&store)
+	if err := srv.Run(ctx, *hostname, *port); err != nil {
 		log.Fatalf("can't start server, %v", err)
 	}
 }

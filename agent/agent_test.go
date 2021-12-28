@@ -2,7 +2,6 @@ package agent
 
 import (
 	"bytes"
-	"context"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -18,7 +17,6 @@ import (
 )
 
 func TestService_SendMetrics(t *testing.T) {
-	ctx := context.TODO()
 	ctrl := gomock.NewController(t)
 
 	testSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +29,7 @@ func TestService_SendMetrics(t *testing.T) {
 	}))
 
 	mSrv := metricmock.NewMockProcessor(ctrl)
-	mSrv.EXPECT().GetAll(ctx).AnyTimes().Return(map[string]model.Metric{
+	mSrv.EXPECT().GetAll().AnyTimes().Return(map[string]model.Metric{
 		"m1": &model.DefaultGauge{},
 	})
 
@@ -43,28 +41,27 @@ func TestService_SendMetrics(t *testing.T) {
 		ServerEndpoint: testSrv.URL + "/update/",
 		MetricSrv:      mSrv,
 	}
-	s.SendMetrics(ctx)
+	s.SendMetrics()
 	assert.Equalf(t, "", logBuf.String(), "no err log in stdout")
 
 	s.ServerEndpoint = testSrv.URL
-	s.SendMetrics(ctx)
+	s.SendMetrics()
 	assert.Containsf(t, logBuf.String(), "failed", "must log err to stdout when failed on send")
 }
 
 func TestService_SnapshotMetrics(t *testing.T) {
-	ctx := context.TODO()
 	ctrl := gomock.NewController(t)
 
 	mSrv := metricmock.NewMockProcessor(ctrl)
-	mSrv.EXPECT().SetGauge(ctx, gomock.Any(), gomock.Any()).AnyTimes().Return(nil)
-	mSrv.EXPECT().IncreaseCounter(ctx, gomock.Any(), gomock.Any()).AnyTimes().Return(nil)
+	mSrv.EXPECT().SetGauge(gomock.Any(), gomock.Any()).AnyTimes().Return(nil)
+	mSrv.EXPECT().IncreaseCounter(gomock.Any(), gomock.Any()).AnyTimes().Return(nil)
 
 	var logBuf bytes.Buffer
 	log.SetOutput(&logBuf)
 	defer log.SetOutput(os.Stderr)
 
 	s := Service{MetricSrv: mSrv}
-	s.SnapshotMetrics(ctx)
+	s.SnapshotMetrics()
 
 	assert.Empty(t, logBuf.String())
 }

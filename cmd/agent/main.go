@@ -11,7 +11,7 @@ import (
 
 	"github.com/tyrylgin/collecter/agent"
 	"github.com/tyrylgin/collecter/service/metric"
-	"github.com/tyrylgin/collecter/storage/mem"
+	"github.com/tyrylgin/collecter/storage/memstore"
 )
 
 var (
@@ -34,7 +34,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	memStore := mem.NewStorage()
+	memStore := memstore.NewStorage()
 	agentSrv := agent.Service{
 		ServerEndpoint: fmt.Sprintf("%s:%s/update/", *hostname, *port),
 		PollInterval:   *pollInterval,

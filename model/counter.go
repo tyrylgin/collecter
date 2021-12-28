@@ -3,6 +3,7 @@ package model
 type Counter interface {
 	Count() int64
 	Increase(int64)
+	Set(int64)
 }
 
 func NewCounter() Counter {
@@ -19,6 +20,10 @@ func (c *DefaultCounter) Count() int64 {
 
 func (c *DefaultCounter) Increase(i int64) {
 	c.count += i
+}
+
+func (c *DefaultCounter) Set(i int64) {
+	c.count = i
 }
 
 func (c *DefaultCounter) Type() MetricType {
