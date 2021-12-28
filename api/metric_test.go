@@ -117,10 +117,10 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	resp, err := http.DefaultClient.Do(req)
+	defer resp.Body.Close()
 	require.NoError(t, err)
 
 	respBody, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
 	require.NoError(t, err)
 
 	return resp, string(respBody)
