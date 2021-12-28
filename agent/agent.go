@@ -66,7 +66,7 @@ func (srv Service) SendMetrics(ctx context.Context) {
 	metrics := srv.MetricSrv.GetAll(ctx)
 
 	for name, metric := range metrics {
-		metricLogString := fmt.Sprintf("%d/%s/", metric.Type(), name)
+		metricLogString := fmt.Sprintf("%s/%s/", metric.Type(), name)
 
 		switch metric.Type() {
 		case model.MetricTypeCounter:

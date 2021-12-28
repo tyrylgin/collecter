@@ -22,7 +22,7 @@ func TestService_SendMetrics(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	testSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "/update/1/m1/0", r.URL.Path)
+		assert.Equal(t, "/update/gauge/m1/0", r.URL.Path)
 
 		time.Sleep(time.Millisecond * 100)
 		w.WriteHeader(http.StatusOK)

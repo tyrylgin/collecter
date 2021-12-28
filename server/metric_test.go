@@ -29,12 +29,12 @@ func TestMetricHandler_HandleMetricRecord(t *testing.T) {
 	testSrv := httptest.NewServer(srv.MetricHandler.HandleMetricRecord(ctx))
 	defer testSrv.Close()
 
-	resp, err := http.Post(testSrv.URL+"/update/1/m1/300", "text/plain", nil)
+	resp, err := http.Post(testSrv.URL+"/update/gauge/m1/300", "text/plain", nil)
 	require.NoError(t, err)
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-	resp, err = http.Post(testSrv.URL+"/update/0/m1/300", "text/plain", nil)
+	resp, err = http.Post(testSrv.URL+"/update/counter/m1/300", "text/plain", nil)
 	require.NoError(t, err)
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)

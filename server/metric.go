@@ -33,11 +33,7 @@ func (h MetricHandler) HandleMetricRecord(ctx context.Context) http.HandlerFunc 
 		}
 
 		metricName := pathFragments[1]
-		metricType, err := strconv.Atoi(pathFragments[0])
-		if err != nil {
-			http.Error(rw, "failed to parse metric type", http.StatusBadRequest)
-			return
-		}
+		metricType := pathFragments[0]
 
 		switch model.MetricType(metricType) {
 		case model.MetricTypeCounter:

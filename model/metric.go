@@ -1,10 +1,10 @@
 package model
 
-type MetricType int
+type MetricType string
 
 const (
-	MetricTypeCounter MetricType = iota
-	MetricTypeGauge
+	MetricTypeCounter MetricType = "counter"
+	MetricTypeGauge   MetricType = "gauge"
 )
 
 type Metric interface {
