@@ -24,8 +24,6 @@ func TestMetricHandler_HandleMetricRecord(t *testing.T) {
 	require.NoError(t, err)
 
 	srv := Rest{
-		Hostname:      "localhost",
-		Port:          "5000",
 		MetricHandler: *h,
 	}
 	testSrv := httptest.NewServer(srv.MetricHandler.HandleMetricRecord(ctx))
