@@ -114,7 +114,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.
 	require.NoError(t, err)
 
 	rctx := chi.NewRouteContext()
-	req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
