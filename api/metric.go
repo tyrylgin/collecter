@@ -1,7 +1,10 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"sort"
 	"strconv"
@@ -11,8 +14,51 @@ import (
 	metricService "github.com/tyrylgin/collecter/service/metric"
 )
 
+type Metrics struct {
+	ID    string  `json:"id"`
+	MType string  `json:"type"`
+	Delta int64   `json:"delta,omitempty"`
+	Value float64 `json:"value,omitempty"`
+}
+
 type metricHandler struct {
 	metricService metricService.Processor
+}
+
+func (h *metricHandler) processMetricJSON(w http.ResponseWriter, r *http.Request) {
+	b, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("failed to read request body: %v", err)
+		http.Error(w, "failed to read request body", http.StatusInternalServerError)
+		return
+	}
+
+	var metric Metrics
+	if err = json.Unmarshal(b, &metric); err != nil {
+		log.Printf("failed to unmarshal metric json: %v", err)
+		http.Error(w, "failed to unmarshal json", http.StatusInternalServerError)
+		return
+	}
+
+	if err := model.MetricType(metric.MType).Validate(); err != nil {
+		http.Error(w, "unsupported metric type", http.StatusNotImplemented)
+		return
+	}
+
+	switch model.MetricType(metric.MType) {
+	case model.MetricTypeCounter:
+		if err = h.metricService.IncreaseCounter(metric.ID, metric.Delta); err != nil {
+			http.Error(w, "failed to set counter value", http.StatusInternalServerError)
+			return
+		}
+	case model.MetricTypeGauge:
+		if err = h.metricService.SetGauge(metric.ID, metric.Value); err != nil {
+			http.Error(w, "failed to set counter value", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.Write([]byte(""))
 }
 
 func (h *metricHandler) processMetric(w http.ResponseWriter, r *http.Request) {

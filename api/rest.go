@@ -40,6 +40,7 @@ func (s *Rest) Run(ctx context.Context, address string, port string) error {
 func (s *Rest) router() chi.Router {
 	router := chi.NewRouter()
 	router.Get("/", s.metricHandler.getAll)
+	router.Post("/update", s.metricHandler.processMetricJSON)
 	router.Post("/update/{metric_type}/{metric_name}/{metric_value}", s.metricHandler.processMetric)
 	router.Get("/value/{metric_type}/{metric_name}", s.metricHandler.getMetricValue)
 	return router
