@@ -1,9 +1,8 @@
 package model
 
 type Counter interface {
-	Count() int64
-	Increase(int64)
-	Set(int64)
+	GetDelta() int64
+	IncreaseDelta(int64)
 }
 
 func NewCounter() Counter {
@@ -11,19 +10,15 @@ func NewCounter() Counter {
 }
 
 type DefaultCounter struct {
-	count int64
+	delta int64
 }
 
-func (c *DefaultCounter) Count() int64 {
-	return c.count
+func (c *DefaultCounter) GetDelta() int64 {
+	return c.delta
 }
 
-func (c *DefaultCounter) Increase(i int64) {
-	c.count += i
-}
-
-func (c *DefaultCounter) Set(i int64) {
-	c.count = i
+func (c *DefaultCounter) IncreaseDelta(i int64) {
+	c.delta += i
 }
 
 func (c *DefaultCounter) Type() MetricType {

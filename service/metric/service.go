@@ -45,7 +45,7 @@ func (s *Service) IncreaseCounter(name string, value int64) error {
 
 	if metric == nil {
 		newCounter := model.NewCounter()
-		newCounter.Increase(value)
+		newCounter.IncreaseDelta(value)
 		err := s.store.Save(name, newCounter.(model.Metric))
 		if err != nil {
 			return fmt.Errorf("can't save new counter metric, %w", err)
@@ -57,7 +57,7 @@ func (s *Service) IncreaseCounter(name string, value int64) error {
 		return errors.New("the metric with same name already exist and has different type than MetricTypeCounter")
 	}
 
-	metric.(model.Counter).Increase(value)
+	metric.(model.Counter).IncreaseDelta(value)
 
 	return nil
 }
@@ -67,7 +67,7 @@ func (s *Service) SetGauge(name string, value float64) error {
 
 	if metric == nil {
 		newGauge := model.NewGauge()
-		newGauge.Set(value)
+		newGauge.SetValue(value)
 		err := s.store.Save(name, newGauge.(model.Metric))
 		if err != nil {
 			return fmt.Errorf("can't save new gauge metric, %w", err)
@@ -79,7 +79,7 @@ func (s *Service) SetGauge(name string, value float64) error {
 		return errors.New("the metric with same name already exist and has different type than MetricTypeGauge")
 	}
 
-	metric.(model.Gauge).Set(value)
+	metric.(model.Gauge).SetValue(value)
 
 	return nil
 }

@@ -24,7 +24,7 @@ func TestDefaultGauge_Value(t *testing.T) {
 				value: tt.value,
 			}
 
-			r := g.Value()
+			r := g.GetValue()
 			assert.Equal(t, tt.want, r)
 		})
 	}
@@ -47,7 +47,7 @@ func TestDefaultGauge_Set(t *testing.T) {
 			g := &DefaultGauge{
 				value: tt.value,
 			}
-			g.Set(tt.want)
+			g.SetValue(tt.want)
 			assert.Equal(t, tt.want, g.value)
 		})
 	}

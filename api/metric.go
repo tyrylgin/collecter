@@ -73,9 +73,9 @@ func (h *metricHandler) getMetricValue(w http.ResponseWriter, r *http.Request) {
 
 	switch mType {
 	case model.MetricTypeCounter:
-		_, err = fmt.Fprintf(w, "%v", metric.(model.Counter).Count())
+		_, err = fmt.Fprintf(w, "%v", metric.(model.Counter).GetDelta())
 	case model.MetricTypeGauge:
-		_, err = fmt.Fprintf(w, "%v", metric.(model.Gauge).Value())
+		_, err = fmt.Fprintf(w, "%v", metric.(model.Gauge).GetValue())
 	}
 	if err != nil {
 		http.Error(w, "can't write response", http.StatusInternalServerError)
@@ -100,9 +100,9 @@ func (h *metricHandler) getAll(w http.ResponseWriter, r *http.Request) {
 	for _, metricName := range metricNames {
 		switch metrics[metricName].Type() {
 		case model.MetricTypeCounter:
-			metricsResp += fmt.Sprintf("%v %v\n", metricName, metrics[metricName].(model.Counter).Count())
+			metricsResp += fmt.Sprintf("%v %v\n", metricName, metrics[metricName].(model.Counter).GetDelta())
 		case model.MetricTypeGauge:
-			metricsResp += fmt.Sprintf("%v %v\n", metricName, metrics[metricName].(model.Gauge).Value())
+			metricsResp += fmt.Sprintf("%v %v\n", metricName, metrics[metricName].(model.Gauge).GetValue())
 		}
 	}
 

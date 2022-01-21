@@ -21,10 +21,10 @@ func TestDefaultCounter_Count(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &DefaultCounter{
-				count: tt.count,
+				delta: tt.count,
 			}
 
-			r := c.Count()
+			r := c.GetDelta()
 			assert.Equal(t, tt.want, r)
 		})
 	}
@@ -59,10 +59,10 @@ func TestDefaultCounter_Increase(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &DefaultCounter{
-				count: tt.count,
+				delta: tt.count,
 			}
-			c.Increase(tt.i)
-			assert.Equal(t, tt.want, c.count)
+			c.IncreaseDelta(tt.i)
+			assert.Equal(t, tt.want, c.delta)
 		})
 	}
 }

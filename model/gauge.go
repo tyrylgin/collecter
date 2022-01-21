@@ -1,8 +1,8 @@
 package model
 
 type Gauge interface {
-	Set(float64)
-	Value() float64
+	SetValue(float64)
+	GetValue() float64
 }
 
 func NewGauge() Gauge {
@@ -13,11 +13,11 @@ type DefaultGauge struct {
 	value float64
 }
 
-func (g *DefaultGauge) Set(v float64) {
+func (g *DefaultGauge) SetValue(v float64) {
 	g.value = v
 }
 
-func (g *DefaultGauge) Value() float64 {
+func (g *DefaultGauge) GetValue() float64 {
 	return g.value
 }
 
