@@ -22,14 +22,14 @@ func TestService_SendMetrics(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	testSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "/update", r.URL.Path)
+		assert.Equal(t, "/update/", r.URL.Path)
 
 		b, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Fatal("failed to read request body")
 		}
 
-		assert.Equal(t, `{"id":"m1","type":"gauge"}`, fmt.Sprintf("%s", b))
+		assert.Equal(t, `{"id":"m1","type":"gauge","value":0}`, fmt.Sprintf("%s", b))
 
 		time.Sleep(time.Millisecond * 100)
 		w.WriteHeader(http.StatusOK)
@@ -47,7 +47,7 @@ func TestService_SendMetrics(t *testing.T) {
 	defer log.SetOutput(os.Stderr)
 
 	s := Service{
-		ServerEndpoint: testSrv.URL + "/update",
+		ServerEndpoint: testSrv.URL + "/update/",
 		MetricSrv:      mSrv,
 	}
 	s.SendMetrics()
