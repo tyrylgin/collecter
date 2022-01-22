@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/tyrylgin/collecter/api"
-	"github.com/tyrylgin/collecter/model"
 	"github.com/tyrylgin/collecter/pkg/memstat"
 	metricService "github.com/tyrylgin/collecter/service/metric"
 )
@@ -68,17 +67,7 @@ func (srv Service) SendMetrics() {
 	metrics := srv.MetricSrv.GetAll()
 
 	for name, metric := range metrics {
-		metricToSend := api.Metrics{
-			ID:    name,
-			MType: string(metric.Type()),
-		}
-
-		switch metric.Type() {
-		case model.MetricTypeCounter:
-			metricToSend.Delta = metric.(model.Counter).GetDelta()
-		case model.MetricTypeGauge:
-			metricToSend.Value = metric.(model.Gauge).GetValue()
-		}
+		metricToSend := api.ModelToMetric(name, metric)
 
 		metricB, err := json.Marshal(metricToSend)
 		if err != nil {

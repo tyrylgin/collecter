@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"sort"
@@ -21,20 +20,29 @@ type Metrics struct {
 	Value float64 `json:"value,omitempty"`
 }
 
+func ModelToMetric(name string, m model.Metric) Metrics {
+	metric := Metrics{
+		ID:    name,
+		MType: string(m.Type()),
+	}
+
+	switch m.Type() {
+	case model.MetricTypeCounter:
+		metric.Delta = m.(model.Counter).GetDelta()
+	case model.MetricTypeGauge:
+		metric.Value = m.(model.Gauge).GetValue()
+	}
+
+	return metric
+}
+
 type metricHandler struct {
 	metricService metricService.Processor
 }
 
 func (h *metricHandler) processMetricJSON(w http.ResponseWriter, r *http.Request) {
-	b, err := io.ReadAll(r.Body)
-	if err != nil {
-		log.Printf("failed to read request body: %v", err)
-		http.Error(w, "failed to read request body", http.StatusInternalServerError)
-		return
-	}
-
 	var metric Metrics
-	if err = json.Unmarshal(b, &metric); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&metric); err != nil {
 		log.Printf("failed to unmarshal metric json: %v", err)
 		http.Error(w, "failed to unmarshal json", http.StatusInternalServerError)
 		return
@@ -47,12 +55,12 @@ func (h *metricHandler) processMetricJSON(w http.ResponseWriter, r *http.Request
 
 	switch model.MetricType(metric.MType) {
 	case model.MetricTypeCounter:
-		if err = h.metricService.IncreaseCounter(metric.ID, metric.Delta); err != nil {
+		if err := h.metricService.IncreaseCounter(metric.ID, metric.Delta); err != nil {
 			http.Error(w, "failed to set counter value", http.StatusInternalServerError)
 			return
 		}
 	case model.MetricTypeGauge:
-		if err = h.metricService.SetGauge(metric.ID, metric.Value); err != nil {
+		if err := h.metricService.SetGauge(metric.ID, metric.Value); err != nil {
 			http.Error(w, "failed to set counter value", http.StatusInternalServerError)
 			return
 		}
@@ -98,6 +106,40 @@ func (h *metricHandler) processMetric(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(""))
 }
 
+func (h *metricHandler) getMetricValueJSON(w http.ResponseWriter, r *http.Request) {
+	var reqMetric Metrics
+	if err := json.NewDecoder(r.Body).Decode(&reqMetric); err != nil {
+		log.Printf("failed to unmarshal metric json: %v", err)
+		http.Error(w, "failed to unmarshal json", http.StatusInternalServerError)
+		return
+	}
+
+	if err := model.MetricType(reqMetric.MType).Validate(); err != nil {
+		http.Error(w, "wrong metric type", http.StatusNotImplemented)
+		return
+	}
+
+	metric, err := h.metricService.Get(reqMetric.ID, model.MetricType(reqMetric.MType))
+	if err != nil {
+		http.Error(w, "failed to get metric", http.StatusBadRequest)
+		return
+	}
+	if metric == nil {
+		http.Error(w, "metric not found", http.StatusNotFound)
+		return
+	}
+
+	respMetric := ModelToMetric(reqMetric.ID, metric)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err = json.NewEncoder(w).Encode(respMetric); err != nil {
+		http.Error(w, "failed to marshal metric json", http.StatusInternalServerError)
+		return
+	}
+}
+
 func (h *metricHandler) getMetricValue(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "metric_name")
 	mType := model.MetricType(chi.URLParam(r, "metric_type"))
@@ -107,7 +149,7 @@ func (h *metricHandler) getMetricValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metric, err := h.metricService.Get(name, &mType)
+	metric, err := h.metricService.Get(name, mType)
 	if err != nil {
 		http.Error(w, "failed to get metric", http.StatusBadRequest)
 		return
