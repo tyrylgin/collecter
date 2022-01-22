@@ -1,7 +1,9 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"log"
@@ -125,6 +127,114 @@ func Test_metricHandler_processMetric(t *testing.T) {
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
 	req, err := http.NewRequest(method, ts.URL+path, nil)
+	require.NoError(t, err)
+
+	rctx := chi.NewRouteContext()
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Fatal("error during http request execution")
+	}
+	require.NoError(t, err)
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+
+	require.NoError(t, err)
+
+	return resp, string(respBody)
+}
+
+func Test_metricHandler_processMetricJSON(t *testing.T) {
+	mock := metricmock.NewMockProcessor(gomock.NewController(t))
+	mock.EXPECT().IncreaseCounter("m1", gomock.Any()).Return(nil)
+	rest := &Rest{metricHandler{metricService: mock}}
+
+	type want struct {
+		code        int
+		response    string
+		contentType string
+	}
+	tests := []struct {
+		name string
+		req  []byte
+		want want
+	}{
+		{
+			name: "common",
+			req:  []byte(`{"id":"m1", "type":"counter", "delta":1}`),
+			want: want{
+				code: 200,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodPost, "/update/", bytes.NewBuffer(tt.req))
+			w := httptest.NewRecorder()
+			h := http.HandlerFunc(rest.metricHandler.processMetricJSON)
+			h.ServeHTTP(w, request)
+			res := w.Result()
+
+			assert.Equal(t, tt.want.code, res.StatusCode)
+		})
+	}
+}
+
+func Test_metricHandler_getMetricValueJSON(t *testing.T) {
+	mock := metricmock.NewMockProcessor(gomock.NewController(t))
+	mock.EXPECT().Get("m1", model.MetricTypeCounter).Return(&model.DefaultCounter{}, nil)
+	rest := &Rest{metricHandler{metricService: mock}}
+
+	type want struct {
+		code        int
+		response    string
+		contentType string
+	}
+	tests := []struct {
+		name string
+		req  []byte
+		want want
+	}{
+		{
+			name: "common",
+			req:  []byte(`{"id":"m1", "type":"counter"}`),
+			want: want{
+				code:        200,
+				response:    `{"id":"m1", "type":"counter", "delta":0}`,
+				contentType: "application/json",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodPost, "/value/", bytes.NewBuffer(tt.req))
+			w := httptest.NewRecorder()
+			h := http.HandlerFunc(rest.metricHandler.getMetricValueJSON)
+			h.ServeHTTP(w, request)
+			res := w.Result()
+
+			assert.Equal(t, tt.want.code, res.StatusCode)
+			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
+			assert.JSONEq(t, tt.want.response, w.Body.String())
+		})
+	}
+}
+
+func testRequestJSON(t *testing.T, ts *httptest.Server, method, path string, body interface{}) (*http.Response, string) {
+	var bbuf *bytes.Buffer
+	if body != nil {
+		bbody, err := json.Marshal(body)
+		if err != nil {
+			log.Fatal("can't marshal body")
+		}
+
+		bbuf = bytes.NewBuffer(bbody)
+	}
+
+	req, err := http.NewRequest(method, ts.URL+path, bbuf)
 	require.NoError(t, err)
 
 	rctx := chi.NewRouteContext()

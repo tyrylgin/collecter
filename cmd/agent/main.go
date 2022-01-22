@@ -36,7 +36,7 @@ func main() {
 
 	memStore := memstore.NewStorage()
 	agentSrv := agent.Service{
-		ServerEndpoint: fmt.Sprintf("%s:%s/update", *hostname, *port),
+		ServerEndpoint: fmt.Sprintf("%s:%s/update/", *hostname, *port),
 		PollInterval:   *pollInterval,
 		ReportInterval: *reportInterval,
 		MetricSrv:      metric.NewProcessor(&memStore),

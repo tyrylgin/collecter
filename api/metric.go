@@ -14,10 +14,10 @@ import (
 )
 
 type Metrics struct {
-	ID    string  `json:"id"`
-	MType string  `json:"type"`
-	Delta int64   `json:"delta,omitempty"`
-	Value float64 `json:"value,omitempty"`
+	ID    string   `json:"id"`
+	MType string   `json:"type"`
+	Delta *int64   `json:"delta,omitempty"`
+	Value *float64 `json:"value,omitempty"`
 }
 
 func ModelToMetric(name string, m model.Metric) Metrics {
@@ -28,9 +28,11 @@ func ModelToMetric(name string, m model.Metric) Metrics {
 
 	switch m.Type() {
 	case model.MetricTypeCounter:
-		metric.Delta = m.(model.Counter).GetDelta()
+		delta := m.(model.Counter).GetDelta()
+		metric.Delta = &delta
 	case model.MetricTypeGauge:
-		metric.Value = m.(model.Gauge).GetValue()
+		value := m.(model.Gauge).GetValue()
+		metric.Value = &value
 	}
 
 	return metric
@@ -55,12 +57,12 @@ func (h *metricHandler) processMetricJSON(w http.ResponseWriter, r *http.Request
 
 	switch model.MetricType(metric.MType) {
 	case model.MetricTypeCounter:
-		if err := h.metricService.IncreaseCounter(metric.ID, metric.Delta); err != nil {
+		if err := h.metricService.IncreaseCounter(metric.ID, *metric.Delta); err != nil {
 			http.Error(w, "failed to set counter value", http.StatusInternalServerError)
 			return
 		}
 	case model.MetricTypeGauge:
-		if err := h.metricService.SetGauge(metric.ID, metric.Value); err != nil {
+		if err := h.metricService.SetGauge(metric.ID, *metric.Value); err != nil {
 			http.Error(w, "failed to set counter value", http.StatusInternalServerError)
 			return
 		}
