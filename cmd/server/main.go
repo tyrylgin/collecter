@@ -2,24 +2,21 @@ package main
 
 import (
 	"context"
-	"flag"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/caarlos0/env/v6"
 	"github.com/tyrylgin/collecter/api"
 	"github.com/tyrylgin/collecter/storage/memstore"
 )
 
-var (
-	hostname = flag.String("hostname", "127.0.0.1", "Hostname to bind to")
-	port     = flag.String("port", "8080", "Port to bind to")
-)
+type config struct {
+	Address string `env:"ADDRESS" envDefault:"127.0.0.1:8080"`
+}
 
 func main() {
-	flag.Parse()
-
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		stopSignal := make(chan os.Signal, 1)
@@ -29,10 +26,15 @@ func main() {
 		os.Exit(0)
 	}()
 
+	var cfg config
+	if err := env.Parse(&cfg); err != nil {
+		log.Printf("failed to parse env variables to config; %+v\n", err)
+	}
+
 	store := memstore.NewStorage()
 	srv := api.Rest{}
 	srv.WithStorage(&store)
-	if err := srv.Run(ctx, *hostname, *port); err != nil {
+	if err := srv.Run(ctx, cfg.Address); err != nil {
 		log.Fatalf("can't start server, %v", err)
 	}
 }

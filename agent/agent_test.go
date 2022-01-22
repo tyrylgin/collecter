@@ -47,8 +47,8 @@ func TestService_SendMetrics(t *testing.T) {
 	defer log.SetOutput(os.Stderr)
 
 	s := Service{
-		ServerEndpoint: testSrv.URL + "/update/",
-		MetricSrv:      mSrv,
+		ServerHost: testSrv.URL,
+		MetricSrv:  mSrv,
 	}
 	s.SendMetrics()
 	assert.Equalf(t, "", logBuf.String(), "no err log in stdout")

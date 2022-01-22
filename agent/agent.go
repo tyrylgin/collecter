@@ -15,14 +15,17 @@ import (
 )
 
 type Service struct {
-	ServerEndpoint string
+	ServerHost     string
 	PollInterval   time.Duration
 	ReportInterval time.Duration
 	MetricSrv      metricService.Processor
 }
 
-func (srv Service) Start(ctx context.Context) {
-	log.Printf("start agent, collect metrics on %v", srv.ServerEndpoint)
+func (srv Service) Run(ctx context.Context) {
+	log.Printf(
+		"start agent, collect metrics on %v, poll interval is %s, report interval is %s",
+		srv.ServerHost, srv.PollInterval, srv.ReportInterval,
+	)
 
 	pollTicker := time.NewTicker(srv.PollInterval)
 	reportTicker := time.NewTicker(srv.ReportInterval)
@@ -74,7 +77,7 @@ func (srv Service) SendMetrics() {
 			log.Printf("failed to marshal metric %s, %v", name, err)
 		}
 
-		resp, err := http.Post(srv.ServerEndpoint, "application/json", bytes.NewBuffer(metricB))
+		resp, err := http.Post(srv.ServerHost+"/update/", "application/json", bytes.NewBuffer(metricB))
 		if err != nil {
 			log.Printf("failed to send metric value %s, %v", metricB, err)
 			continue
