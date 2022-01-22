@@ -20,16 +20,16 @@ func NewProcessor(store storage.MetricStorer) *Service {
 }
 
 type Processor interface {
-	Get(name string, metricType *model.MetricType) (model.Metric, error)
+	Get(name string, metricType model.MetricType) (model.Metric, error)
 	GetAll() map[string]model.Metric
 	IncreaseCounter(name string, value int64) error
 	SetGauge(name string, value float64) error
 }
 
-func (s *Service) Get(name string, metricType *model.MetricType) (model.Metric, error) {
+func (s *Service) Get(name string, metricType model.MetricType) (model.Metric, error) {
 	metric := s.store.Get(name)
 
-	if metric != nil && metricType != nil && metric.Type() != *metricType {
+	if metric != nil && metric.Type() != metricType {
 		return nil, fmt.Errorf("metric with name %s has different type %s", name, metric.Type())
 	}
 

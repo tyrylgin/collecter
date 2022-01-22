@@ -41,13 +41,11 @@ func Test_metricHandler_getAll(t *testing.T) {
 }
 
 func Test_metricHandler_getMetricValue(t *testing.T) {
-	typeCounter := model.MetricTypeCounter
-	typeGauge := model.MetricTypeGauge
 	mock := metricmock.NewMockProcessor(gomock.NewController(t))
-	mock.EXPECT().Get("m1", &typeCounter).Return(&model.DefaultCounter{}, nil)
-	mock.EXPECT().Get("m2", &typeCounter).Return(nil, errors.New("some error"))
-	mock.EXPECT().Get("m3", &typeCounter).Return(nil, nil)
-	mock.EXPECT().Get("m4", &typeGauge).Return(&model.DefaultGauge{}, nil)
+	mock.EXPECT().Get("m1", model.MetricTypeCounter).Return(&model.DefaultCounter{}, nil)
+	mock.EXPECT().Get("m2", model.MetricTypeCounter).Return(nil, errors.New("some error"))
+	mock.EXPECT().Get("m3", model.MetricTypeCounter).Return(nil, nil)
+	mock.EXPECT().Get("m4", model.MetricTypeGauge).Return(&model.DefaultGauge{}, nil)
 	rest := &Rest{metricHandler{metricService: mock}}
 
 	ts := httptest.NewServer(rest.router())

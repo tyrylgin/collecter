@@ -20,12 +20,11 @@ func TestService_Get(t *testing.T) {
 	s.EXPECT().Get("m1").AnyTimes().Return(&model.DefaultGauge{})
 	p := NewProcessor(s)
 
-	m, err := p.Get("m1", nil)
+	m, err := p.Get("m1", model.MetricTypeGauge)
 	require.NoError(t, err)
 	assert.Equal(t, &model.DefaultGauge{}, m)
 
-	typeCounter := model.MetricTypeCounter
-	m, err = p.Get("m1", &typeCounter)
+	m, err = p.Get("m1", model.MetricTypeCounter)
 	require.Error(t, err)
 	assert.Nil(t, m)
 }
