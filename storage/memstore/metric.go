@@ -57,6 +57,10 @@ func (s *MemStore) Save(name string, metric model.Metric) error {
 }
 
 func (s *MemStore) WithFileBackup(ctx context.Context, fileName string, storeInterval time.Duration, isRestore bool) (err error) {
+	if fileName == "" {
+		return nil
+	}
+
 	s.file, err = os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0777)
 	if err != nil {
 		return fmt.Errorf("can't open file for memstore; %v", err)
