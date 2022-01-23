@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"os"
 	"os/signal"
@@ -13,11 +14,18 @@ import (
 	"github.com/tyrylgin/collecter/storage/memstore"
 )
 
+const (
+	Address       string        = "127.0.0.1:8080"
+	IsRestore     bool          = true
+	StoreFile     string        = "/tmp/devops-metrics-db.json"
+	StoreInterval time.Duration = time.Second * 300
+)
+
 type config struct {
-	Address       string        `env:"ADDRESS" envDefault:"127.0.0.1:8080"`
-	IsRestore     bool          `env:"RESTORE" envDefault:"true"`
-	StoreFile     string        `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
-	StoreInterval time.Duration `env:"STORE_INTERVAL" envDefault:"300s"`
+	Address       string        `env:"ADDRESS"`
+	IsRestore     bool          `env:"RESTORE"`
+	StoreFile     string        `env:"STORE_FILE"`
+	StoreInterval time.Duration `env:"STORE_INTERVAL"`
 }
 
 func main() {
@@ -31,6 +39,13 @@ func main() {
 	}()
 
 	var cfg config
+
+	flag.StringVar(&cfg.Address, "a", Address, "Hostname send metrics to")
+	flag.BoolVar(&cfg.IsRestore, "r", IsRestore, "Is restore from backup file")
+	flag.StringVar(&cfg.StoreFile, "f", StoreFile, "Backup file path")
+	flag.DurationVar(&cfg.StoreInterval, "i", StoreInterval, "Backup to file interval")
+	flag.Parse()
+
 	if err := env.Parse(&cfg); err != nil {
 		log.Printf("failed to parse env variables to config; %+v\n", err)
 	}
