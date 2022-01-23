@@ -1,8 +1,11 @@
 ### get metric
-GET {{host}}/value/
+POST {{host}}/value/
 Content-Type: application/json
 
 {
 	"id": "Mallocs",
 	"type": "gauge"
 }
+
+### get all metric
+GET {{host}}/
