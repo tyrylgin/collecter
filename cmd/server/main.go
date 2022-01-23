@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/tyrylgin/collecter/api"
@@ -13,7 +14,10 @@ import (
 )
 
 type config struct {
-	Address string `env:"ADDRESS" envDefault:"127.0.0.1:8080"`
+	Address       string        `env:"ADDRESS" envDefault:"127.0.0.1:8080"`
+	IsRestore     bool          `env:"RESTORE" envDefault:"true"`
+	StoreFile     string        `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
+	StoreInterval time.Duration `env:"STORE_INTERVAL" envDefault:"300s"`
 }
 
 func main() {
@@ -32,6 +36,10 @@ func main() {
 	}
 
 	store := memstore.NewStorage()
+	if err := store.WithFileBackup(ctx, cfg.StoreFile, cfg.StoreInterval, cfg.IsRestore); err != nil {
+		log.Fatalf("failed to init backup file for memstore; %v", err)
+	}
+
 	srv := api.Rest{}
 	srv.WithStorage(&store)
 	if err := srv.Run(ctx, cfg.Address); err != nil {
