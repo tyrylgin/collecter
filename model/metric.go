@@ -60,14 +60,14 @@ func (mm *MetricMap) UnmarshalJSON(data []byte) error {
 	for name, rawMetric := range metricMapAlias {
 		switch rawMetric.Type {
 		case string(MetricTypeCounter):
-			counter := &Counter{}
-			if err := json.Unmarshal(rawMetric.Metric, counter); err != nil {
+			counter := Counter{}
+			if err := json.Unmarshal(rawMetric.Metric, &counter); err != nil {
 				return fmt.Errorf("value of type (%T): unmarshal: %w", counter, err)
 			}
 			metrics[name] = counter
 		case string(MetricTypeGauge):
-			gauge := &Gauge{}
-			if err := json.Unmarshal(rawMetric.Metric, gauge); err != nil {
+			gauge := Gauge{}
+			if err := json.Unmarshal(rawMetric.Metric, &gauge); err != nil {
 				return fmt.Errorf("value of type (%T): unmarshal: %w", gauge, err)
 			}
 			metrics[name] = gauge
