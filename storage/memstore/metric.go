@@ -68,7 +68,7 @@ func (s *MemStore) WithFileBackup(ctx context.Context, fileName string, storeInt
 
 	if isRestore {
 		if err := s.restoreFromFile(); err != nil {
-			log.Fatalf("failed to load metrics backup from file; %v", err)
+			log.Printf("failed to load metrics backup from file; %v", err)
 		}
 	}
 
