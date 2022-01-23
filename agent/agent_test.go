@@ -38,8 +38,8 @@ func TestService_SendMetrics(t *testing.T) {
 	}))
 
 	mSrv := metricmock.NewMockProcessor(ctrl)
-	mSrv.EXPECT().GetAll().AnyTimes().Return(map[string]model.Metric{
-		"m1": &model.DefaultGauge{},
+	mSrv.EXPECT().GetAll().AnyTimes().Return(model.MetricMap{
+		"m1": model.Gauge{},
 	})
 
 	var logBuf bytes.Buffer

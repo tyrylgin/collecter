@@ -1,17 +1,24 @@
 package model
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
-type MetricType string
+type (
+	MetricType string
+
+	Metric interface {
+		Type() MetricType
+	}
+
+	MetricMap map[string]Metric
+)
 
 const (
 	MetricTypeCounter MetricType = "counter"
 	MetricTypeGauge   MetricType = "gauge"
 )
-
-type Metric interface {
-	Type() MetricType
-}
 
 func (t MetricType) Validate() error {
 	switch t {

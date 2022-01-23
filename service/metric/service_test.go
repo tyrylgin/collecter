@@ -17,12 +17,12 @@ func TestNewProcessor(t *testing.T) {
 
 func TestService_Get(t *testing.T) {
 	s := storagemock.NewMockMetricStorer(gomock.NewController(t))
-	s.EXPECT().Get("m1").AnyTimes().Return(&model.DefaultGauge{})
+	s.EXPECT().Get("m1").AnyTimes().Return(&model.Gauge{})
 	p := NewProcessor(s)
 
 	m, err := p.Get("m1", model.MetricTypeGauge)
 	require.NoError(t, err)
-	assert.Equal(t, &model.DefaultGauge{}, m)
+	assert.Equal(t, &model.Gauge{}, m)
 
 	m, err = p.Get("m1", model.MetricTypeCounter)
 	require.Error(t, err)
@@ -31,8 +31,8 @@ func TestService_Get(t *testing.T) {
 
 func TestService_GetAll(t *testing.T) {
 	exp := map[string]model.Metric{
-		"m1": &model.DefaultCounter{},
-		"m2": &model.DefaultGauge{},
+		"m1": &model.Counter{},
+		"m2": &model.Gauge{},
 	}
 
 	s := storagemock.NewMockMetricStorer(gomock.NewController(t))
@@ -44,8 +44,8 @@ func TestService_GetAll(t *testing.T) {
 
 func TestService_IncreaseCounter(t *testing.T) {
 	s := storagemock.NewMockMetricStorer(gomock.NewController(t))
-	s.EXPECT().Get("m1").Return(&model.DefaultCounter{})
-	s.EXPECT().Get("m2").Return(&model.DefaultGauge{})
+	s.EXPECT().Get("m1").Return(&model.Counter{})
+	s.EXPECT().Save("m1", gomock.Any()).Return(nil)
 	s.EXPECT().Get("m3").Return(nil)
 	s.EXPECT().Save("m3", gomock.Any()).Return(nil)
 	p := NewProcessor(s)
@@ -53,26 +53,20 @@ func TestService_IncreaseCounter(t *testing.T) {
 	err := p.IncreaseCounter("m1", 1)
 	require.NoError(t, err)
 
-	err = p.IncreaseCounter("m2", 1)
-	require.Errorf(t, err, "error if trying increase gauge")
-
 	err = p.IncreaseCounter("m3", 1)
 	require.NoError(t, err, "save new counter if name not occupied")
 }
 
 func TestService_SetGauge(t *testing.T) {
 	s := storagemock.NewMockMetricStorer(gomock.NewController(t))
-	s.EXPECT().Get("m1").Return(&model.DefaultGauge{})
-	s.EXPECT().Get("m2").Return(&model.DefaultCounter{})
+	s.EXPECT().Get("m1").Return(&model.Gauge{})
+	s.EXPECT().Save("m1", gomock.Any()).Return(nil)
 	s.EXPECT().Get("m3").Return(nil)
 	s.EXPECT().Save("m3", gomock.Any()).Return(nil)
 	p := NewProcessor(s)
 
 	err := p.SetGauge("m1", 1)
 	require.NoError(t, err)
-
-	err = p.SetGauge("m2", 1)
-	require.Errorf(t, err, "error if trying set counter")
 
 	err = p.SetGauge("m3", 1)
 	require.NoError(t, err, "save new gauge if name not occupied")

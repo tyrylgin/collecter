@@ -2,7 +2,6 @@
 package metric
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/tyrylgin/collecter/model"
@@ -41,45 +40,31 @@ func (s *Service) GetAll() map[string]model.Metric {
 }
 
 func (s *Service) IncreaseCounter(name string, value int64) error {
-	metric := s.store.Get(name)
+	metric, ok := s.store.Get(name).(model.Counter)
 
-	if metric == nil {
-		newCounter := model.NewCounter()
-		newCounter.IncreaseDelta(value)
-		err := s.store.Save(name, newCounter.(model.Metric))
-		if err != nil {
-			return fmt.Errorf("can't save new counter metric, %w", err)
-		}
-		return nil
+	if !ok {
+		metric = model.Counter{}
 	}
 
-	if metric.Type() != model.MetricTypeCounter {
-		return errors.New("the metric with same name already exist and has different type than MetricTypeCounter")
+	metric.Delta += value
+	if err := s.store.Save(name, metric); err != nil {
+		return fmt.Errorf("can't save counter metric, %w", err)
 	}
-
-	metric.(model.Counter).IncreaseDelta(value)
 
 	return nil
 }
 
 func (s *Service) SetGauge(name string, value float64) error {
-	metric := s.store.Get(name)
+	metric, ok := s.store.Get(name).(model.Gauge)
 
-	if metric == nil {
-		newGauge := model.NewGauge()
-		newGauge.SetValue(value)
-		err := s.store.Save(name, newGauge.(model.Metric))
-		if err != nil {
-			return fmt.Errorf("can't save new gauge metric, %w", err)
-		}
-		return nil
+	if !ok {
+		metric = model.Gauge{}
 	}
 
-	if metric.Type() != model.MetricTypeGauge {
-		return errors.New("the metric with same name already exist and has different type than MetricTypeGauge")
+	metric.Value = value
+	if err := s.store.Save(name, metric); err != nil {
+		return fmt.Errorf("can't save counter metric, %w", err)
 	}
-
-	metric.(model.Gauge).SetValue(value)
 
 	return nil
 }

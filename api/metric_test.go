@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"log"
@@ -21,11 +20,11 @@ import (
 
 func Test_metricHandler_getAll(t *testing.T) {
 	mock := metricmock.NewMockProcessor(gomock.NewController(t))
-	mock.EXPECT().GetAll().Return(map[string]model.Metric{
-		"m1": &model.DefaultGauge{},
-		"m2": &model.DefaultCounter{},
+	mock.EXPECT().GetAll().Return(model.MetricMap{
+		"m1": model.Gauge{},
+		"m2": model.Counter{},
 	})
-	mock.EXPECT().GetAll().Return(map[string]model.Metric{})
+	mock.EXPECT().GetAll().Return(model.MetricMap{})
 	rest := &Rest{metricHandler{metricService: mock}}
 
 	ts := httptest.NewServer(rest.router())
@@ -44,10 +43,10 @@ func Test_metricHandler_getAll(t *testing.T) {
 
 func Test_metricHandler_getMetricValue(t *testing.T) {
 	mock := metricmock.NewMockProcessor(gomock.NewController(t))
-	mock.EXPECT().Get("m1", model.MetricTypeCounter).Return(&model.DefaultCounter{}, nil)
+	mock.EXPECT().Get("m1", model.MetricTypeCounter).Return(model.Counter{}, nil)
 	mock.EXPECT().Get("m2", model.MetricTypeCounter).Return(nil, errors.New("some error"))
 	mock.EXPECT().Get("m3", model.MetricTypeCounter).Return(nil, nil)
-	mock.EXPECT().Get("m4", model.MetricTypeGauge).Return(&model.DefaultGauge{}, nil)
+	mock.EXPECT().Get("m4", model.MetricTypeGauge).Return(model.Gauge{}, nil)
 	rest := &Rest{metricHandler{metricService: mock}}
 
 	ts := httptest.NewServer(rest.router())
@@ -184,7 +183,7 @@ func Test_metricHandler_processMetricJSON(t *testing.T) {
 
 func Test_metricHandler_getMetricValueJSON(t *testing.T) {
 	mock := metricmock.NewMockProcessor(gomock.NewController(t))
-	mock.EXPECT().Get("m1", model.MetricTypeCounter).Return(&model.DefaultCounter{}, nil)
+	mock.EXPECT().Get("m1", model.MetricTypeCounter).Return(model.Counter{}, nil)
 	rest := &Rest{metricHandler{metricService: mock}}
 
 	type want struct {
@@ -221,34 +220,4 @@ func Test_metricHandler_getMetricValueJSON(t *testing.T) {
 			assert.JSONEq(t, tt.want.response, w.Body.String())
 		})
 	}
-}
-
-func testRequestJSON(t *testing.T, ts *httptest.Server, method, path string, body interface{}) (*http.Response, string) {
-	var bbuf *bytes.Buffer
-	if body != nil {
-		bbody, err := json.Marshal(body)
-		if err != nil {
-			log.Fatal("can't marshal body")
-		}
-
-		bbuf = bytes.NewBuffer(bbody)
-	}
-
-	req, err := http.NewRequest(method, ts.URL+path, bbuf)
-	require.NoError(t, err)
-
-	rctx := chi.NewRouteContext()
-	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Fatal("error during http request execution")
-	}
-	require.NoError(t, err)
-
-	respBody, err := ioutil.ReadAll(resp.Body)
-
-	require.NoError(t, err)
-
-	return resp, string(respBody)
 }

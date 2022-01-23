@@ -49,10 +49,10 @@ func (mr *MockMetricStorerMockRecorder) Get(name interface{}) *gomock.Call {
 }
 
 // GetAll mocks base method.
-func (m *MockMetricStorer) GetAll() map[string]model.Metric {
+func (m *MockMetricStorer) GetAll() model.MetricMap {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAll")
-	ret0, _ := ret[0].(map[string]model.Metric)
+	ret0, _ := ret[0].(model.MetricMap)
 	return ret0
 }
 

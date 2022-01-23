@@ -13,25 +13,25 @@ import (
 	metricService "github.com/tyrylgin/collecter/service/metric"
 )
 
-type Metrics struct {
+type Metric struct {
 	ID    string   `json:"id"`
-	MType string   `json:"type"`
+	Type  string   `json:"type"`
 	Delta *int64   `json:"delta,omitempty"`
 	Value *float64 `json:"value,omitempty"`
 }
 
-func ModelToMetric(name string, m model.Metric) Metrics {
-	metric := Metrics{
-		ID:    name,
-		MType: string(m.Type()),
+func ModelToMetric(name string, m model.Metric) Metric {
+	metric := Metric{
+		ID:   name,
+		Type: string(m.Type()),
 	}
 
 	switch m.Type() {
 	case model.MetricTypeCounter:
-		delta := m.(model.Counter).GetDelta()
+		delta := m.(model.Counter).Delta
 		metric.Delta = &delta
 	case model.MetricTypeGauge:
-		value := m.(model.Gauge).GetValue()
+		value := m.(model.Gauge).Value
 		metric.Value = &value
 	}
 
@@ -43,19 +43,19 @@ type metricHandler struct {
 }
 
 func (h *metricHandler) processMetricJSON(w http.ResponseWriter, r *http.Request) {
-	var metric Metrics
+	var metric Metric
 	if err := json.NewDecoder(r.Body).Decode(&metric); err != nil {
 		log.Printf("failed to unmarshal metric json: %v", err)
 		http.Error(w, "failed to unmarshal json", http.StatusInternalServerError)
 		return
 	}
 
-	if err := model.MetricType(metric.MType).Validate(); err != nil {
+	if err := model.MetricType(metric.Type).Validate(); err != nil {
 		http.Error(w, "unsupported metric type", http.StatusNotImplemented)
 		return
 	}
 
-	switch model.MetricType(metric.MType) {
+	switch model.MetricType(metric.Type) {
 	case model.MetricTypeCounter:
 		if err := h.metricService.IncreaseCounter(metric.ID, *metric.Delta); err != nil {
 			http.Error(w, "failed to set counter value", http.StatusInternalServerError)
@@ -109,19 +109,19 @@ func (h *metricHandler) processMetric(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *metricHandler) getMetricValueJSON(w http.ResponseWriter, r *http.Request) {
-	var reqMetric Metrics
+	var reqMetric Metric
 	if err := json.NewDecoder(r.Body).Decode(&reqMetric); err != nil {
 		log.Printf("failed to unmarshal metric json: %v", err)
 		http.Error(w, "failed to unmarshal json", http.StatusInternalServerError)
 		return
 	}
 
-	if err := model.MetricType(reqMetric.MType).Validate(); err != nil {
+	if err := model.MetricType(reqMetric.Type).Validate(); err != nil {
 		http.Error(w, "wrong metric type", http.StatusNotImplemented)
 		return
 	}
 
-	metric, err := h.metricService.Get(reqMetric.ID, model.MetricType(reqMetric.MType))
+	metric, err := h.metricService.Get(reqMetric.ID, model.MetricType(reqMetric.Type))
 	if err != nil {
 		http.Error(w, "failed to get metric", http.StatusBadRequest)
 		return
@@ -163,9 +163,9 @@ func (h *metricHandler) getMetricValue(w http.ResponseWriter, r *http.Request) {
 
 	switch mType {
 	case model.MetricTypeCounter:
-		_, err = fmt.Fprintf(w, "%v", metric.(model.Counter).GetDelta())
+		_, err = fmt.Fprintf(w, "%v", metric.(model.Counter).Delta)
 	case model.MetricTypeGauge:
-		_, err = fmt.Fprintf(w, "%v", metric.(model.Gauge).GetValue())
+		_, err = fmt.Fprintf(w, "%v", metric.(model.Gauge).Value)
 	}
 	if err != nil {
 		http.Error(w, "can't write response", http.StatusInternalServerError)
@@ -188,11 +188,12 @@ func (h *metricHandler) getAll(w http.ResponseWriter, r *http.Request) {
 
 	var metricsResp string
 	for _, metricName := range metricNames {
-		switch metrics[metricName].Type() {
+		metric := metrics[metricName]
+		switch metric.Type() {
 		case model.MetricTypeCounter:
-			metricsResp += fmt.Sprintf("%v %v\n", metricName, metrics[metricName].(model.Counter).GetDelta())
+			metricsResp += fmt.Sprintf("%v %v\n", metricName, metric.(model.Counter).Delta)
 		case model.MetricTypeGauge:
-			metricsResp += fmt.Sprintf("%v %v\n", metricName, metrics[metricName].(model.Gauge).GetValue())
+			metricsResp += fmt.Sprintf("%v %v\n", metricName, metric.(model.Gauge).Value)
 		}
 	}
 
