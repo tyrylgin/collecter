@@ -16,7 +16,7 @@ import (
 type config struct {
 	Address       string        `env:"ADDRESS" envDefault:"127.0.0.1:8080"`
 	IsRestore     bool          `env:"RESTORE" envDefault:"true"`
-	StoreFile     string        `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
+	StoreFile     string        `env:"TEMP_FILE" envDefault:"/tmp/devops-metrics-db.json"`
 	StoreInterval time.Duration `env:"STORE_INTERVAL" envDefault:"300s"`
 }
 
