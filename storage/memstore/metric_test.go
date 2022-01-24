@@ -8,14 +8,14 @@ import (
 )
 
 func TestMemStore_NewStorage(t *testing.T) {
-	assert.Equal(t, MemStore{metrics: make(map[string]model.Metric)}, NewStorage())
+	assert.Equal(t, MemStore{metrics: model.MetricMap{}}, NewStorage())
 }
 
 func TestMemStore_GetAll(t *testing.T) {
 	store := NewStorage()
-	store.metrics = map[string]model.Metric{
-		"m1": &model.DefaultCounter{},
-		"m2": &model.DefaultGauge{},
+	store.metrics = model.MetricMap{
+		"m1": model.Counter{},
+		"m2": model.Gauge{},
 	}
 
 	assert.Equal(t, store.metrics, store.GetAll())
@@ -23,9 +23,9 @@ func TestMemStore_GetAll(t *testing.T) {
 
 func TestMemStore_GetByName(t *testing.T) {
 	store := NewStorage()
-	store.metrics = map[string]model.Metric{
-		"m1": &model.DefaultCounter{},
-		"m2": &model.DefaultGauge{},
+	store.metrics = model.MetricMap{
+		"m1": model.Counter{},
+		"m2": model.Gauge{},
 	}
 
 	assert.Equal(t, store.metrics["m1"], store.Get("m1"))
@@ -34,19 +34,19 @@ func TestMemStore_GetByName(t *testing.T) {
 
 func TestMemStore_Save(t *testing.T) {
 	s := NewStorage()
-	s.metrics = map[string]model.Metric{
-		"m1": &model.DefaultCounter{},
-		"m2": &model.DefaultGauge{},
+	s.metrics = model.MetricMap{
+		"m1": model.Counter{},
+		"m2": model.Gauge{},
 	}
 
 	es := NewStorage()
-	es.metrics = map[string]model.Metric{
-		"m1": &model.DefaultCounter{},
-		"m2": &model.DefaultGauge{},
-		"m3": &model.DefaultGauge{},
+	es.metrics = model.MetricMap{
+		"m1": model.Counter{},
+		"m2": model.Gauge{},
+		"m3": model.Gauge{},
 	}
 
-	nc := &model.DefaultGauge{}
+	nc := model.Gauge{}
 	_ = s.Save("m3", nc)
 	assert.Equalf(t, es.metrics, s.metrics, "add new metric to memstore")
 

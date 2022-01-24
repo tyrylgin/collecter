@@ -35,7 +35,7 @@ func (m *MockProcessor) EXPECT() *MockProcessorMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockProcessor) Get(name string, metricType *model.MetricType) (model.Metric, error) {
+func (m *MockProcessor) Get(name string, metricType model.MetricType) (model.Metric, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", name, metricType)
 	ret0, _ := ret[0].(model.Metric)
@@ -75,20 +75,6 @@ func (m *MockProcessor) IncreaseCounter(name string, value int64) error {
 func (mr *MockProcessorMockRecorder) IncreaseCounter(name, value interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncreaseCounter", reflect.TypeOf((*MockProcessor)(nil).IncreaseCounter), name, value)
-}
-
-// SetCounter mocks base method.
-func (m *MockProcessor) SetCounter(name string, value int64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetCounter", name, value)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SetCounter indicates an expected call of SetCounter.
-func (mr *MockProcessorMockRecorder) SetCounter(name, value interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCounter", reflect.TypeOf((*MockProcessor)(nil).SetCounter), name, value)
 }
 
 // SetGauge mocks base method.

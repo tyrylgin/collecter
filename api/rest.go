@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -21,9 +20,11 @@ func (s *Rest) WithStorage(store storage.MetricStorer) {
 	}
 }
 
-func (s *Rest) Run(ctx context.Context, address string, port string) error {
+func (s *Rest) Run(ctx context.Context, address string) error {
+	log.Printf("start server on %v", address)
+
 	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%s", address, port),
+		Addr:    address,
 		Handler: s.router(),
 	}
 
@@ -40,7 +41,11 @@ func (s *Rest) Run(ctx context.Context, address string, port string) error {
 func (s *Rest) router() chi.Router {
 	router := chi.NewRouter()
 	router.Get("/", s.metricHandler.getAll)
+
+	router.Post("/update/", s.metricHandler.processMetricJSON)
 	router.Post("/update/{metric_type}/{metric_name}/{metric_value}", s.metricHandler.processMetric)
+
+	router.Post("/value/", s.metricHandler.getMetricValueJSON)
 	router.Get("/value/{metric_type}/{metric_name}", s.metricHandler.getMetricValue)
 	return router
 }

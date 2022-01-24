@@ -1,27 +1,32 @@
 package agent
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
 	"time"
 
-	"github.com/tyrylgin/collecter/model"
+	"github.com/tyrylgin/collecter/api"
 	"github.com/tyrylgin/collecter/pkg/memstat"
 	metricService "github.com/tyrylgin/collecter/service/metric"
 )
 
 type Service struct {
-	ServerEndpoint string
+	ServerHost     string
 	PollInterval   time.Duration
 	ReportInterval time.Duration
 	MetricSrv      metricService.Processor
 }
 
-func (srv Service) Start(ctx context.Context) {
-	log.Printf("start agent, collect metrics on %v", srv.ServerEndpoint)
+func (srv Service) Run(ctx context.Context) {
+	log.Printf(
+		"start agent, collect metrics on %v, poll interval is %s, report interval is %s",
+		srv.ServerHost, srv.PollInterval, srv.ReportInterval,
+	)
 
 	pollTicker := time.NewTicker(srv.PollInterval)
 	reportTicker := time.NewTicker(srv.ReportInterval)
@@ -66,19 +71,16 @@ func (srv Service) SendMetrics() {
 	metrics := srv.MetricSrv.GetAll()
 
 	for name, metric := range metrics {
-		metricLogString := fmt.Sprintf("%s/%s/", metric.Type(), name)
+		metricToSend := api.ModelToMetric(name, metric)
 
-		switch metric.Type() {
-		case model.MetricTypeCounter:
-			metricLogString += fmt.Sprint(metric.(model.Counter).Count())
-		case model.MetricTypeGauge:
-			metricLogString += fmt.Sprint(metric.(model.Gauge).Value())
+		metricJSON, err := json.Marshal(metricToSend)
+		if err != nil {
+			log.Printf("failed to marshal metric %s, %v", name, err)
 		}
 
-		endpoint := srv.ServerEndpoint + metricLogString
-		resp, err := http.Post(endpoint, "text/plain", nil)
+		resp, err := http.Post(fmt.Sprintf("%s/update/", srv.ServerHost), "application/json", bytes.NewBuffer(metricJSON))
 		if err != nil {
-			log.Printf("failed to send metric value %s, %v", metricLogString, err)
+			log.Printf("failed to send metric value %s, %v", metricJSON, err)
 			continue
 		}
 		resp.Body.Close()

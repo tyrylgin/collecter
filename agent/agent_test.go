@@ -2,6 +2,7 @@ package agent
 
 import (
 	"bytes"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -20,17 +21,24 @@ func TestService_SendMetrics(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	testSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "/update/gauge/m1/0", r.URL.Path)
+		assert.Equal(t, "/update/", r.URL.Path)
+
+		b, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Fatal("failed to read request body")
+		}
+
+		assert.Equal(t, `{"id":"m1","type":"gauge","value":0}`, string(b))
 
 		time.Sleep(time.Millisecond * 100)
 		w.WriteHeader(http.StatusOK)
-		_, err := w.Write(nil)
+		_, err = w.Write(nil)
 		require.NoError(t, err)
 	}))
 
 	mSrv := metricmock.NewMockProcessor(ctrl)
-	mSrv.EXPECT().GetAll().AnyTimes().Return(map[string]model.Metric{
-		"m1": &model.DefaultGauge{},
+	mSrv.EXPECT().GetAll().AnyTimes().Return(model.MetricMap{
+		"m1": model.Gauge{},
 	})
 
 	var logBuf bytes.Buffer
@@ -38,15 +46,11 @@ func TestService_SendMetrics(t *testing.T) {
 	defer log.SetOutput(os.Stderr)
 
 	s := Service{
-		ServerEndpoint: testSrv.URL + "/update/",
-		MetricSrv:      mSrv,
+		ServerHost: testSrv.URL,
+		MetricSrv:  mSrv,
 	}
 	s.SendMetrics()
 	assert.Equalf(t, "", logBuf.String(), "no err log in stdout")
-
-	s.ServerEndpoint = testSrv.URL
-	s.SendMetrics()
-	assert.Containsf(t, logBuf.String(), "failed", "must log err to stdout when failed on send")
 }
 
 func TestService_SnapshotMetrics(t *testing.T) {
