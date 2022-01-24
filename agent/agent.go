@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -72,14 +73,14 @@ func (srv Service) SendMetrics() {
 	for name, metric := range metrics {
 		metricToSend := api.ModelToMetric(name, metric)
 
-		metricB, err := json.Marshal(metricToSend)
+		metricJSON, err := json.Marshal(metricToSend)
 		if err != nil {
 			log.Printf("failed to marshal metric %s, %v", name, err)
 		}
 
-		resp, err := http.Post(srv.ServerHost+"/update/", "application/json", bytes.NewBuffer(metricB))
+		resp, err := http.Post(fmt.Sprintf("%s/update/", srv.ServerHost), "application/json", bytes.NewBuffer(metricJSON))
 		if err != nil {
-			log.Printf("failed to send metric value %s, %v", metricB, err)
+			log.Printf("failed to send metric value %s, %v", metricJSON, err)
 			continue
 		}
 		resp.Body.Close()

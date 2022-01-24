@@ -2,7 +2,6 @@ package agent
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -29,7 +28,7 @@ func TestService_SendMetrics(t *testing.T) {
 			log.Fatal("failed to read request body")
 		}
 
-		assert.Equal(t, `{"id":"m1","type":"gauge","value":0}`, fmt.Sprintf("%s", b))
+		assert.Equal(t, `{"id":"m1","type":"gauge","value":0}`, string(b))
 
 		time.Sleep(time.Millisecond * 100)
 		w.WriteHeader(http.StatusOK)
