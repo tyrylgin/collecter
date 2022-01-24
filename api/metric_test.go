@@ -175,6 +175,7 @@ func Test_metricHandler_processMetricJSON(t *testing.T) {
 			h := http.HandlerFunc(rest.metricHandler.processMetricJSON)
 			h.ServeHTTP(w, request)
 			res := w.Result()
+			defer res.Body.Close()
 
 			assert.Equal(t, tt.want.code, res.StatusCode)
 		})
@@ -214,6 +215,7 @@ func Test_metricHandler_getMetricValueJSON(t *testing.T) {
 			h := http.HandlerFunc(rest.metricHandler.getMetricValueJSON)
 			h.ServeHTTP(w, request)
 			res := w.Result()
+			defer res.Body.Close()
 
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
