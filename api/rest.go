@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	metricService "github.com/tyrylgin/collecter/service/metric"
 	"github.com/tyrylgin/collecter/storage"
 )
@@ -40,6 +41,8 @@ func (s *Rest) Run(ctx context.Context, address string) error {
 
 func (s *Rest) router() chi.Router {
 	router := chi.NewRouter()
+	router.Use(middleware.Compress(5))
+
 	router.Get("/", s.metricHandler.getAll)
 
 	router.Post("/update/", s.metricHandler.processMetricJSON)
@@ -47,5 +50,6 @@ func (s *Rest) router() chi.Router {
 
 	router.Post("/value/", s.metricHandler.getMetricValueJSON)
 	router.Get("/value/{metric_type}/{metric_name}", s.metricHandler.getMetricValue)
+
 	return router
 }
