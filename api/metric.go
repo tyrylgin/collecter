@@ -34,8 +34,6 @@ func (m *Metric) CalcHash(hashKey string) {
 		source = fmt.Sprintf("%s:%f", source, *m.Value)
 	}
 
-	log.Printf("%s", source)
-
 	m.Hash = GetHash(source, hashKey)
 }
 
@@ -84,7 +82,7 @@ func (h *metricHandler) processMetricJSON(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if h.hashKey != "" && EqualHash(metric, h.hashKey) {
+	if h.hashKey != "" && !EqualHash(metric, h.hashKey) {
 		http.Error(w, "hashes not equal", http.StatusBadRequest)
 		return
 	}

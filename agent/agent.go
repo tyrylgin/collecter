@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -88,6 +89,15 @@ func (srv Service) SendMetrics() {
 			log.Printf("failed to send metric value %s, %v", metricJSON, err)
 			continue
 		}
-		resp.Body.Close()
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				log.Printf("failed to read response body; %v", err)
+				return
+			}
+			log.Printf("failed to send metric value; server respond: %v, %s", resp.StatusCode, body)
+		}
 	}
 }
