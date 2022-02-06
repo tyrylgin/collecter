@@ -146,7 +146,7 @@ func (h *metricHandler) getMetricValue(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "metric_name")
 	mType := model.MetricType(chi.URLParam(r, "metric_type"))
 
-	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Content-Type", "text/html")
 
 	if err := mType.Validate(); err != nil {
 		http.Error(w, "wrong metric type", http.StatusNotImplemented)
@@ -199,6 +199,6 @@ func (h *metricHandler) getAll(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Content-Type", "text/html")
 	w.Write([]byte(metricsResp))
 }
