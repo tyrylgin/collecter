@@ -26,6 +26,7 @@ type config struct {
 	Address        string        `env:"ADDRESS"`
 	PollInterval   time.Duration `env:"POLL_INTERVAL"`
 	ReportInterval time.Duration `env:"REPORT_INTERVAL"`
+	SecretKey      string        `env:"KEY"`
 }
 
 func main() {
@@ -43,6 +44,7 @@ func main() {
 	flag.StringVar(&cfg.Address, "a", Address, "Hostname send metrics to")
 	flag.DurationVar(&cfg.PollInterval, "p", PollInterval, "Metric update interval")
 	flag.DurationVar(&cfg.ReportInterval, "r", ReportInterval, "Metric push to server interval")
+	flag.StringVar(&cfg.SecretKey, "k", "", "Secret key to sign data")
 	flag.Parse()
 
 	if err := env.Parse(&cfg); err != nil {

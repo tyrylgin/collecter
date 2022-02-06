@@ -19,6 +19,7 @@ type Service struct {
 	ServerHost     string
 	PollInterval   time.Duration
 	ReportInterval time.Duration
+	HashKey        string
 	MetricSrv      metricService.Processor
 }
 
@@ -72,6 +73,10 @@ func (srv Service) SendMetrics() {
 
 	for name, metric := range metrics {
 		metricToSend := api.ModelToMetric(name, metric)
+
+		if srv.HashKey != "" {
+			metricToSend.CalcHash(srv.HashKey)
+		}
 
 		metricJSON, err := json.Marshal(metricToSend)
 		if err != nil {

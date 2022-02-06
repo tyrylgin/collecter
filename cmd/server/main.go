@@ -26,6 +26,7 @@ type config struct {
 	IsRestore     bool          `env:"RESTORE"`
 	StoreFile     string        `env:"STORE_FILE"`
 	StoreInterval time.Duration `env:"STORE_INTERVAL"`
+	SecretKey     string        `env:"KEY"`
 }
 
 func main() {
@@ -44,6 +45,7 @@ func main() {
 	flag.BoolVar(&cfg.IsRestore, "r", IsRestore, "Is restore from backup file")
 	flag.StringVar(&cfg.StoreFile, "f", StoreFile, "Backup file path")
 	flag.DurationVar(&cfg.StoreInterval, "i", StoreInterval, "Backup to file interval")
+	flag.StringVar(&cfg.SecretKey, "k", "", "Secret key to sign data")
 	flag.Parse()
 
 	if err := env.Parse(&cfg); err != nil {

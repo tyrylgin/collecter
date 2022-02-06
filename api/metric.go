@@ -1,6 +1,9 @@
 package api
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -18,6 +21,28 @@ type Metric struct {
 	Type  string   `json:"type"`
 	Delta *int64   `json:"delta,omitempty"`
 	Value *float64 `json:"value,omitempty"`
+	Hash  string   `json:"hash,omitempty"`
+}
+
+func (m *Metric) CalcHash(hashKey string) {
+	source := fmt.Sprintf("%s:%s", m.ID, m.Type)
+
+	if m.Delta != nil {
+		source = fmt.Sprintf("%s:%d", source, m.Delta)
+	}
+
+	if m.Value != nil {
+		source = fmt.Sprintf("%s:%v", source, m.Value)
+	}
+
+	m.Hash = GetHash(source, hashKey)
+}
+
+func EqualHash(m Metric, hashKey string) bool {
+	originalHash := m.Hash
+	m.CalcHash(hashKey)
+
+	return originalHash == m.Hash
 }
 
 func ModelToMetric(name string, m model.Metric) Metric {
@@ -38,7 +63,15 @@ func ModelToMetric(name string, m model.Metric) Metric {
 	return metric
 }
 
+func GetHash(message string, secret string) string {
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(message))
+
+	return hex.EncodeToString(h.Sum(nil))
+}
+
 type metricHandler struct {
+	hashKey       string
 	metricService metricService.Processor
 }
 
@@ -47,6 +80,11 @@ func (h *metricHandler) processMetricJSON(w http.ResponseWriter, r *http.Request
 	if err := json.NewDecoder(r.Body).Decode(&metric); err != nil {
 		log.Printf("failed to unmarshal metric json: %v", err)
 		http.Error(w, "failed to unmarshal json", http.StatusInternalServerError)
+		return
+	}
+
+	if h.hashKey != "" && EqualHash(metric, h.hashKey) {
+		http.Error(w, "hashes not equal", http.StatusBadRequest)
 		return
 	}
 
@@ -132,6 +170,10 @@ func (h *metricHandler) getMetricValueJSON(w http.ResponseWriter, r *http.Reques
 	}
 
 	respMetric := ModelToMetric(reqMetric.ID, metric)
+
+	if h.hashKey != "" {
+		respMetric.CalcHash(h.hashKey)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
