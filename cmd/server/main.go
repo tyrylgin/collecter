@@ -59,6 +59,7 @@ func main() {
 
 	srv := api.Rest{}
 	srv.WithStorage(&store)
+	srv.SetHashKey(cfg.SecretKey)
 	if err := srv.Run(ctx, cfg.Address); err != nil {
 		log.Fatalf("can't start server, %v", err)
 	}

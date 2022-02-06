@@ -57,6 +57,7 @@ func main() {
 		PollInterval:   cfg.PollInterval,
 		ReportInterval: cfg.ReportInterval,
 		MetricSrv:      metric.NewProcessor(&memStore),
+		HashKey:        cfg.SecretKey,
 	}
 
 	agentSrv.Run(ctx)

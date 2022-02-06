@@ -21,6 +21,10 @@ func (s *Rest) WithStorage(store storage.MetricStorer) {
 	}
 }
 
+func (s *Rest) SetHashKey(key string) {
+	s.metricHandler.hashKey = key
+}
+
 func (s *Rest) Run(ctx context.Context, address string) error {
 	log.Printf("start server on %v", address)
 
