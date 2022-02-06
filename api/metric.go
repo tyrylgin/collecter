@@ -27,12 +27,14 @@ func (m *Metric) CalcHash(hashKey string) {
 	source := fmt.Sprintf("%s:%s", m.ID, m.Type)
 
 	if m.Delta != nil {
-		source = fmt.Sprintf("%s:%d", source, m.Delta)
+		source = fmt.Sprintf("%s:%d", source, *m.Delta)
 	}
 
 	if m.Value != nil {
-		source = fmt.Sprintf("%s:%v", source, m.Value)
+		source = fmt.Sprintf("%s:%f", source, *m.Value)
 	}
+
+	log.Printf("%s", source)
 
 	m.Hash = GetHash(source, hashKey)
 }
