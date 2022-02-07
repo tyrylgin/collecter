@@ -95,12 +95,14 @@ func (h *metricHandler) processMetricJSON(w http.ResponseWriter, r *http.Request
 	switch model.MetricType(metric.Type) {
 	case model.MetricTypeCounter:
 		if err := h.metricService.IncreaseCounter(metric.ID, *metric.Delta); err != nil {
+			log.Printf("failed to set counter value: %v\n", err)
 			http.Error(w, "failed to set counter value", http.StatusInternalServerError)
 			return
 		}
 	case model.MetricTypeGauge:
 		if err := h.metricService.SetGauge(metric.ID, *metric.Value); err != nil {
-			http.Error(w, "failed to set counter value", http.StatusInternalServerError)
+			log.Printf("failed to set gauge value: %v\n", err)
+			http.Error(w, "failed to set gauge value", http.StatusInternalServerError)
 			return
 		}
 	}

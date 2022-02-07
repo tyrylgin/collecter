@@ -2,8 +2,12 @@ package psstore
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
+	"log"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/jmoiron/sqlx"
 	"github.com/tyrylgin/collecter/model"
 	"github.com/tyrylgin/collecter/storage"
 )
@@ -11,30 +15,129 @@ import (
 var _ storage.MetricStorer = (*PsStore)(nil)
 
 type PsStore struct {
-	db *pgxpool.Pool
+	db *sqlx.DB
 }
 
 func Init(ctx context.Context, dsn string) (*PsStore, error) {
-	dbPoll, err := pgxpool.Connect(ctx, dsn)
+	store := &PsStore{}
+
+	db, err := sqlx.Open("pgx", dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	return &PsStore{db: dbPoll}, nil
+	store.db = db
+	store.SetupSchema()
+
+	return store, nil
+}
+
+func (s PsStore) SetupSchema() {
+	s.db.MustExec(`
+		DO $$
+		BEGIN
+			IF NOT EXISTS (SELECT FROM pg_type WHERE typname = 'metric_type') THEN
+				CREATE TYPE metric_type AS ENUM ('counter', 'gauge');
+			END IF;
+
+			CREATE TABLE IF NOT EXISTS metrics
+			(
+				id text CONSTRAINT firstkey PRIMARY KEY,
+				type metric_type NOT NULL,
+				delta bigint,
+				value double precision
+			);
+		END$$;
+ 	`)
+}
+
+type metricDB struct {
+	ID         string
+	MetricType string `db:"type"`
+	Delta      sql.NullInt64
+	Value      sql.NullFloat64
+}
+
+func convertToDB(name string, metric model.Metric) metricDB {
+	mDB := metricDB{
+		ID:         name,
+		MetricType: string(metric.Type()),
+	}
+
+	switch metric.Type() {
+	case model.MetricTypeCounter:
+		mDB.Delta = sql.NullInt64{
+			Int64: metric.(model.Counter).Delta,
+			Valid: true,
+		}
+	case model.MetricTypeGauge:
+		mDB.Value = sql.NullFloat64{
+			Float64: metric.(model.Gauge).Value,
+			Valid:   true,
+		}
+	}
+
+	return mDB
+}
+
+func convertToModel(mDB metricDB) model.Metric {
+	var metric model.Metric
+
+	switch model.MetricType(mDB.MetricType) {
+	case model.MetricTypeCounter:
+		metric = model.Counter{Delta: mDB.Delta.Int64}
+	case model.MetricTypeGauge:
+		metric = model.Gauge{Value: mDB.Value.Float64}
+	}
+
+	return metric
 }
 
 func (s PsStore) GetAll() model.MetricMap {
-	return nil
+	metrics := map[string]model.Metric{}
+	var mDBs []metricDB
+
+	err := s.db.Select(&mDBs, `SELECT * FROM metrics ORDER BY id ASC`)
+	if err != nil {
+		log.Printf("can't get metrics: %v", err)
+		return nil
+	}
+
+	for _, item := range mDBs {
+		metrics[item.ID] = convertToModel(item)
+	}
+
+	return metrics
 }
 
 func (s PsStore) Get(name string) model.Metric {
-	return nil
+	var mDB metricDB
+
+	err := s.db.Get(&mDB, `SELECT * FROM metrics WHERE id=$1`, name)
+	if err != nil {
+		log.Printf("can't get metric by name: %v", err)
+		return nil
+	}
+
+	return convertToModel(mDB)
 }
 
 func (s PsStore) Save(name string, metric model.Metric) error {
+	mDB := convertToDB(name, metric)
+
+	rawQuery := `
+		INSERT INTO metrics(id, type, delta, value) VALUES(:id, :type, :delta, :value)
+		ON CONFLICT (id) DO UPDATE SET delta=:delta, value=:value
+	`
+
+	_, err := s.db.NamedExec(rawQuery, mDB)
+	if err != nil {
+		return fmt.Errorf("can't upsert metric: %v", err)
+	}
+
 	return nil
 }
 
-func (s PsStore) Ping(ctx context.Context) error {
-	return s.db.Ping(ctx)
+func (s PsStore) Ping() error {
+	return s.db.Ping()
 }

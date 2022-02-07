@@ -18,7 +18,7 @@ func PingDBHandler(store storage.MetricStorer) http.HandlerFunc {
 			return
 		}
 
-		if err := dbStore.Ping(r.Context()); err != nil {
+		if err := dbStore.Ping(); err != nil {
 			log.Printf("unsuccessful ping to database: %v\n", err)
 			http.Error(w, "unsuccessful ping to database", http.StatusInternalServerError)
 			return
