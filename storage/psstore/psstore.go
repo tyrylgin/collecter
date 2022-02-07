@@ -126,7 +126,7 @@ func (s PsStore) Save(name string, metric model.Metric) error {
 
 	rawQuery := `
 		INSERT INTO metrics(id, type, delta, value) VALUES(:id, :type, :delta, :value)
-		ON CONFLICT (id) DO UPDATE SET delta= metrics.delta + :delta, value=:value
+		ON CONFLICT (id) DO UPDATE SET delta=:delta, value=:value
 	`
 
 	_, err := s.db.NamedExec(rawQuery, mDB)
