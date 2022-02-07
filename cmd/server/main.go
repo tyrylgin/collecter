@@ -57,7 +57,7 @@ func main() {
 
 	srv := api.Rest{}
 	if cfg.DatabaseDSN != "" {
-		dbStore, err := psstore.Init(ctx, cfg.DatabaseDSN)
+		dbStore, err := psstore.Init(cfg.DatabaseDSN)
 		if err != nil {
 			log.Fatalf("unable to connect to database: %v\n", err)
 		}

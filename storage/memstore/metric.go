@@ -56,6 +56,21 @@ func (s *MemStore) Save(name string, metric model.Metric) error {
 	return nil
 }
 
+func (s *MemStore) SaveAll(metrics model.MetricMap) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.metrics = metrics
+
+	if s.isSyncBackup {
+		if err := s.dropToFile(); err != nil {
+			return fmt.Errorf("failed to backup metrics to file in sync mode; %v", err)
+		}
+	}
+
+	return nil
+}
+
 func (s *MemStore) WithFileBackup(ctx context.Context, fileName string, storeInterval time.Duration, isRestore bool) (err error) {
 	if fileName == "" {
 		return nil

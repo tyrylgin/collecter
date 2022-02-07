@@ -23,6 +23,7 @@ type Processor interface {
 	GetAll() map[string]model.Metric
 	IncreaseCounter(name string, value int64) error
 	SetGauge(name string, value float64) error
+	SetMetrics(metrics map[string]model.Metric) error
 }
 
 func (s *Service) Get(name string, metricType model.MetricType) (model.Metric, error) {
@@ -64,6 +65,14 @@ func (s *Service) SetGauge(name string, value float64) error {
 	metric.Value = value
 	if err := s.store.Save(name, metric); err != nil {
 		return fmt.Errorf("can't save counter metric, %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) SetMetrics(metrics map[string]model.Metric) error {
+	if err := s.store.SaveAll(metrics); err != nil {
+		return fmt.Errorf("can't save metrics, %w", err)
 	}
 
 	return nil

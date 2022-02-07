@@ -90,3 +90,17 @@ func (mr *MockProcessorMockRecorder) SetGauge(name, value interface{}) *gomock.C
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetGauge", reflect.TypeOf((*MockProcessor)(nil).SetGauge), name, value)
 }
+
+// SetMetrics mocks base method.
+func (m *MockProcessor) SetMetrics(metrics map[string]model.Metric) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetMetrics", metrics)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetMetrics indicates an expected call of SetMetrics.
+func (mr *MockProcessorMockRecorder) SetMetrics(metrics interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetMetrics", reflect.TypeOf((*MockProcessor)(nil).SetMetrics), metrics)
+}

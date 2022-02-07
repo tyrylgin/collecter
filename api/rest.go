@@ -55,6 +55,8 @@ func (s *Rest) router() chi.Router {
 	router.Post("/update/", s.metricHandler.processMetricJSON)
 	router.Post("/update/{metric_type}/{metric_name}/{metric_value}", s.metricHandler.processMetric)
 
+	router.Post("/updates/", s.metricHandler.batchProcessMetricsJSON)
+
 	router.Post("/value/", s.metricHandler.getMetricValueJSON)
 	router.Get("/value/{metric_type}/{metric_name}", s.metricHandler.getMetricValue)
 

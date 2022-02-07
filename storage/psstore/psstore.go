@@ -1,7 +1,6 @@
 package psstore
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -18,7 +17,7 @@ type PsStore struct {
 	db *sqlx.DB
 }
 
-func Init(ctx context.Context, dsn string) (*PsStore, error) {
+func Init(dsn string) (*PsStore, error) {
 	store := &PsStore{}
 
 	db, err := sqlx.Open("pgx", dsn)
@@ -134,6 +133,32 @@ func (s PsStore) Save(name string, metric model.Metric) error {
 	if err != nil {
 		return fmt.Errorf("can't upsert metric: %v", err)
 	}
+
+	return nil
+}
+
+func (s PsStore) SaveAll(metrics model.MetricMap) error {
+	tx := s.db.MustBegin()
+
+	rawQuery := `
+		INSERT INTO metrics (id, type, delta, value) VALUES (:id, :type, :delta, :value)
+		ON CONFLICT (id) DO UPDATE SET delta=:delta, value=:value
+	`
+
+	stmt, err := tx.PrepareNamed(rawQuery)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %v", err)
+	}
+
+	for name, metric := range metrics {
+		_, err := stmt.Exec(convertToDB(name, metric))
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to execute statement: %v", err)
+		}
+	}
+
+	tx.Commit()
 
 	return nil
 }

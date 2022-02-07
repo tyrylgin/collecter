@@ -62,6 +62,19 @@ func ModelToMetric(name string, m model.Metric) Metric {
 	return metric
 }
 
+func MetricToModel(m Metric) model.Metric {
+	var metric model.Metric
+
+	switch model.MetricType(m.Type) {
+	case model.MetricTypeCounter:
+		metric = model.Counter{Delta: *m.Delta}
+	case model.MetricTypeGauge:
+		metric = model.Gauge{Value: *m.Value}
+	}
+
+	return metric
+}
+
 func GetHash(message string, secret string) string {
 	h := hmac.New(sha256.New, []byte(secret))
 	h.Write([]byte(message))
@@ -72,6 +85,42 @@ func GetHash(message string, secret string) string {
 type metricHandler struct {
 	hashKey       string
 	metricService metricService.Processor
+}
+
+func (h *metricHandler) batchProcessMetricsJSON(w http.ResponseWriter, r *http.Request) {
+	var reqData struct {
+		MetricSlice []Metric `json:"metrics"`
+	}
+	metrics := model.MetricMap{}
+
+	if err := json.NewDecoder(r.Body).Decode(&reqData); err != nil {
+		log.Printf("failed to unmarshal metrics json: %v\n", err)
+		http.Error(w, "failed to unmarshal json", http.StatusInternalServerError)
+		return
+	}
+
+	for _, metric := range reqData.MetricSlice {
+		if h.hashKey != "" && !EqualHash(metric, h.hashKey) {
+			err := fmt.Sprintf("hashes not equal: %v", metric)
+			log.Println(err)
+			http.Error(w, err, http.StatusInternalServerError)
+		}
+
+		if err := model.MetricType(metric.Type).Validate(); err != nil {
+			err := fmt.Sprintf("unsupported metric type: %v", metric)
+			log.Printf(err)
+			http.Error(w, err, http.StatusInternalServerError)
+		}
+
+		metrics[metric.ID] = MetricToModel(metric)
+	}
+
+	if err := h.metricService.SetMetrics(metrics); err != nil {
+		log.Printf("failed to batch save metrics: %v\n", err)
+		http.Error(w, "failed to batch save metrics", http.StatusInternalServerError)
+	}
+
+	w.Write([]byte(""))
 }
 
 func (h *metricHandler) processMetricJSON(w http.ResponseWriter, r *http.Request) {

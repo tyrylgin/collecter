@@ -75,3 +75,17 @@ func (mr *MockMetricStorerMockRecorder) Save(name, metric interface{}) *gomock.C
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockMetricStorer)(nil).Save), name, metric)
 }
+
+// SaveAll mocks base method.
+func (m *MockMetricStorer) SaveAll(metrics model.MetricMap) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SaveAll", metrics)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SaveAll indicates an expected call of SaveAll.
+func (mr *MockMetricStorerMockRecorder) SaveAll(metrics interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveAll", reflect.TypeOf((*MockMetricStorer)(nil).SaveAll), metrics)
+}

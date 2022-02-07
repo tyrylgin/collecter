@@ -12,3 +12,22 @@ GET {{host}}/
 
 ### ping db
 GET {{host}}/ping
+
+### batch update
+POST {{host}}/updates/
+Content-Type: application/json
+
+{
+  "metrics": [
+    {
+      "id": "kek",
+      "type": "gauge",
+      "value": 4.88
+    },
+    {
+      "id": "kek2",
+      "type": "counter",
+      "delta": 4
+    }
+  ]
+}
