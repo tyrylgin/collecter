@@ -2,11 +2,11 @@ package psstore
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 	"github.com/tyrylgin/collecter/model"
 	"github.com/tyrylgin/collecter/storage"
 )
@@ -131,7 +131,7 @@ func (s PsStore) Save(name string, metric model.Metric) error {
 
 	_, err := s.db.NamedExec(rawQuery, mDB)
 	if err != nil {
-		return fmt.Errorf("can't upsert metric: %v", err)
+		return errors.Wrap(err, "can't upsert metric")
 	}
 
 	return nil
@@ -147,14 +147,14 @@ func (s PsStore) SaveAll(metrics model.MetricMap) error {
 
 	stmt, err := tx.PrepareNamed(rawQuery)
 	if err != nil {
-		return fmt.Errorf("failed to prepare statement: %v", err)
+		return errors.Wrap(err, "failed to prepare statement")
 	}
 
 	for name, metric := range metrics {
 		_, err := stmt.Exec(convertToDB(name, metric))
 		if err != nil {
 			tx.Rollback()
-			return fmt.Errorf("failed to execute statement: %v", err)
+			return errors.Wrap(err, "failed to execute statement")
 		}
 	}
 

@@ -2,8 +2,7 @@
 package metric
 
 import (
-	"fmt"
-
+	"github.com/pkg/errors"
 	"github.com/tyrylgin/collecter/model"
 	"github.com/tyrylgin/collecter/storage"
 )
@@ -30,7 +29,7 @@ func (s *Service) Get(name string, metricType model.MetricType) (model.Metric, e
 	metric := s.store.Get(name)
 
 	if metric != nil && metric.Type() != metricType {
-		return nil, fmt.Errorf("metric with name %s has different type %s", name, metric.Type())
+		return nil, errors.Errorf("metric with name %s has different type %s", name, metric.Type())
 	}
 
 	return metric, nil
@@ -49,7 +48,7 @@ func (s *Service) IncreaseCounter(name string, value int64) error {
 
 	metric.Delta += value
 	if err := s.store.Save(name, metric); err != nil {
-		return fmt.Errorf("can't save counter metric, %w", err)
+		return errors.Errorf("can't save counter metric, %v", err)
 	}
 
 	return nil
@@ -64,7 +63,7 @@ func (s *Service) SetGauge(name string, value float64) error {
 
 	metric.Value = value
 	if err := s.store.Save(name, metric); err != nil {
-		return fmt.Errorf("can't save counter metric, %w", err)
+		return errors.Errorf("can't save counter metric, %v", err)
 	}
 
 	return nil
@@ -72,7 +71,7 @@ func (s *Service) SetGauge(name string, value float64) error {
 
 func (s *Service) SetMetrics(metrics map[string]model.Metric) error {
 	if err := s.store.SaveAll(metrics); err != nil {
-		return fmt.Errorf("can't save metrics, %w", err)
+		return errors.Errorf("can't save metrics, %v", err)
 	}
 
 	return nil
