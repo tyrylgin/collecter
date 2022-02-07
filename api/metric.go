@@ -89,14 +89,13 @@ type metricHandler struct {
 
 func (h *metricHandler) batchProcessMetricsJSON(w http.ResponseWriter, r *http.Request) {
 	var reqData []Metric
-	metrics := model.MetricMap{}
-
 	if err := json.NewDecoder(r.Body).Decode(&reqData); err != nil {
 		log.Printf("failed to unmarshal metrics json: %v\n", err)
 		http.Error(w, "failed to unmarshal json", http.StatusInternalServerError)
 		return
 	}
 
+	metricsToSave := model.MetricMap{}
 	for _, metric := range reqData {
 		if h.hashKey != "" && !EqualHash(metric, h.hashKey) {
 			err := fmt.Sprintf("hashes not equal: %v", metric)
@@ -112,10 +111,17 @@ func (h *metricHandler) batchProcessMetricsJSON(w http.ResponseWriter, r *http.R
 			return
 		}
 
-		metrics[metric.ID] = MetricToModel(metric)
+		m, ok := metricsToSave[metric.ID]
+		if model.MetricType(metric.Type) == model.MetricTypeCounter && ok {
+			counter := m.(model.Counter)
+			counter.Delta += *metric.Delta
+			metricsToSave[metric.ID] = counter
+		} else {
+			metricsToSave[metric.ID] = MetricToModel(metric)
+		}
 	}
 
-	if err := h.metricService.SetMetrics(metrics); err != nil {
+	if err := h.metricService.SetMetrics(metricsToSave); err != nil {
 		log.Printf("failed to batch save metrics: %v\n", err)
 		http.Error(w, "failed to batch save metrics", http.StatusInternalServerError)
 		return

@@ -3,8 +3,8 @@ POST {{host}}/value/
 Content-Type: application/json
 
 {
-	"id": "Mallocs",
-	"type": "gauge"
+	"id": "TestBatchAPI",
+	"type": "counter"
 }
 
 ### get all metric
@@ -17,17 +17,21 @@ GET {{host}}/ping
 POST {{host}}/updates/
 Content-Type: application/json
 
-{
-  "metrics": [
-    {
-      "id": "kek",
-      "type": "gauge",
-      "value": 4.88
-    },
-    {
-      "id": "kek2",
-      "type": "counter",
-      "delta": 4
-    }
-  ]
-}
+[
+  {
+    "id": "TestBatchAPI",
+    "type": "counter",
+    "delta": 300
+  },
+  {
+    "id": "TestBatchAPI",
+    "type": "counter",
+    "delta": 800
+  },
+  {
+    "id": "TestBatchAPI",
+    "type": "counter",
+    "delta": 14
+  }
+]
+
