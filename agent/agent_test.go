@@ -28,7 +28,7 @@ func TestService_SendMetrics(t *testing.T) {
 			log.Fatal("failed to read request body")
 		}
 
-		assert.Equal(t, `{"metrics":[{"id":"m1","type":"gauge","value":0},{"id":"m2","type":"counter","delta":0}]}`, string(b))
+		assert.Equal(t, `[{"id":"m1","type":"gauge","value":0},{"id":"m2","type":"counter","delta":0}]`, string(b))
 
 		time.Sleep(time.Millisecond * 100)
 		w.WriteHeader(http.StatusOK)
