@@ -104,12 +104,14 @@ func (h *metricHandler) batchProcessMetricsJSON(w http.ResponseWriter, r *http.R
 			err := fmt.Sprintf("hashes not equal: %v", metric)
 			log.Println(err)
 			http.Error(w, err, http.StatusInternalServerError)
+			return
 		}
 
 		if err := model.MetricType(metric.Type).Validate(); err != nil {
 			err := fmt.Sprintf("unsupported metric type: %v", metric)
-			log.Printf(err)
+			log.Println(err)
 			http.Error(w, err, http.StatusInternalServerError)
+			return
 		}
 
 		metrics[metric.ID] = MetricToModel(metric)
@@ -118,6 +120,7 @@ func (h *metricHandler) batchProcessMetricsJSON(w http.ResponseWriter, r *http.R
 	if err := h.metricService.SetMetrics(metrics); err != nil {
 		log.Printf("failed to batch save metrics: %v\n", err)
 		http.Error(w, "failed to batch save metrics", http.StatusInternalServerError)
+		return
 	}
 
 	w.Write([]byte(""))
