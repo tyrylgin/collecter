@@ -58,7 +58,7 @@ func (s *Rest) router() chi.Router {
 	router.Post("/value/", s.metricHandler.getMetricValueJSON)
 	router.Get("/value/{metric_type}/{metric_name}", s.metricHandler.getMetricValue)
 
-	router.Get("/ping/", s.pingDBHandlerFunc)
+	router.Get("/ping", s.pingDBHandlerFunc)
 
 	return router
 }

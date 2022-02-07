@@ -11,4 +11,4 @@ Content-Type: application/json
 GET {{host}}/
 
 ### ping db
-GET {{host}}/ping/
+GET {{host}}/ping
