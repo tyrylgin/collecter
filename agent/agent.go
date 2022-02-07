@@ -72,9 +72,7 @@ func (srv Service) SnapshotMetrics() {
 func (srv Service) SendMetrics() {
 	metrics := srv.MetricSrv.GetAll()
 
-	var reqBody struct {
-		Metrics []api.Metric `json:"metrics"`
-	}
+	var reqBody []api.Metric
 
 	for name, metric := range metrics {
 		metricToSend := api.ModelToMetric(name, metric)
@@ -82,7 +80,7 @@ func (srv Service) SendMetrics() {
 			metricToSend.CalcHash(srv.HashKey)
 		}
 
-		reqBody.Metrics = append(reqBody.Metrics, metricToSend)
+		reqBody = append(reqBody, metricToSend)
 	}
 
 	reqBodyJSON, err := json.Marshal(reqBody)

@@ -88,9 +88,7 @@ type metricHandler struct {
 }
 
 func (h *metricHandler) batchProcessMetricsJSON(w http.ResponseWriter, r *http.Request) {
-	var reqData struct {
-		MetricSlice []Metric `json:"metrics"`
-	}
+	var reqData []Metric
 	metrics := model.MetricMap{}
 
 	if err := json.NewDecoder(r.Body).Decode(&reqData); err != nil {
@@ -99,7 +97,7 @@ func (h *metricHandler) batchProcessMetricsJSON(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	for _, metric := range reqData.MetricSlice {
+	for _, metric := range reqData {
 		if h.hashKey != "" && !EqualHash(metric, h.hashKey) {
 			err := fmt.Sprintf("hashes not equal: %v", metric)
 			log.Println(err)
