@@ -97,9 +97,13 @@ func (h *metricHandler) batchProcessMetricsJSON(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	log.Print(reqData)
-
 	for _, metric := range reqData {
+		if metric.Delta != nil {
+			log.Printf("%s %s %v", metric.ID, metric.Type, *metric.Delta)
+		} else {
+			log.Printf("%s %s %v", metric.ID, metric.Type, *metric.Value)
+		}
+
 		if h.hashKey != "" && !EqualHash(metric, h.hashKey) {
 			err := fmt.Sprintf("hashes not equal: %v", metric)
 			log.Println(err)
@@ -224,7 +228,11 @@ func (h *metricHandler) getMetricValueJSON(w http.ResponseWriter, r *http.Reques
 
 	respMetric := ModelToMetric(reqMetric.ID, metric)
 
-	log.Print(respMetric)
+	if respMetric.Delta != nil {
+		log.Printf("%s %s %v", respMetric.ID, respMetric.Type, *respMetric.Delta)
+	} else {
+		log.Printf("%s %s %v", respMetric.ID, respMetric.Type, *respMetric.Value)
+	}
 
 	if h.hashKey != "" {
 		respMetric.CalcHash(h.hashKey)
