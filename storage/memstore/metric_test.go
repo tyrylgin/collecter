@@ -8,7 +8,7 @@ import (
 )
 
 func TestMemStore_NewStorage(t *testing.T) {
-	assert.Equal(t, MemStore{metrics: model.MetricMap{}}, NewStorage())
+	assert.Equal(t, &MemStore{metrics: model.MetricMap{}}, NewStorage())
 }
 
 func TestMemStore_GetAll(t *testing.T) {

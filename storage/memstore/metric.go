@@ -22,15 +22,15 @@ type MemStore struct {
 	isSyncBackup bool
 }
 
-func NewStorage() MemStore {
-	return MemStore{metrics: model.MetricMap{}}
+func NewStorage() *MemStore {
+	return &MemStore{metrics: model.MetricMap{}}
 }
 
-func (s *MemStore) GetAll() model.MetricMap {
+func (s MemStore) GetAll() model.MetricMap {
 	return s.metrics
 }
 
-func (s *MemStore) Get(name string) model.Metric {
+func (s MemStore) Get(name string) model.Metric {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -41,7 +41,7 @@ func (s *MemStore) Get(name string) model.Metric {
 	return s.metrics[name]
 }
 
-func (s *MemStore) Save(name string, metric model.Metric) error {
+func (s MemStore) Save(name string, metric model.Metric) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

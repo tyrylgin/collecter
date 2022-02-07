@@ -12,13 +12,16 @@ import (
 )
 
 type Rest struct {
-	metricHandler metricHandler
+	metricHandler     metricHandler
+	pingDBHandlerFunc http.HandlerFunc
 }
 
 func (s *Rest) WithStorage(store storage.MetricStorer) {
 	s.metricHandler = metricHandler{
 		metricService: metricService.NewProcessor(store),
 	}
+
+	s.pingDBHandlerFunc = PingDBHandler(store)
 }
 
 func (s *Rest) SetHashKey(key string) {
@@ -54,6 +57,8 @@ func (s *Rest) router() chi.Router {
 
 	router.Post("/value/", s.metricHandler.getMetricValueJSON)
 	router.Get("/value/{metric_type}/{metric_name}", s.metricHandler.getMetricValue)
+
+	router.Get("/ping/", s.pingDBHandlerFunc)
 
 	return router
 }

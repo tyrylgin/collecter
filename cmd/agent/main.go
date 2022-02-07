@@ -56,7 +56,7 @@ func main() {
 		ServerHost:     fmt.Sprintf("http://%s", cfg.Address),
 		PollInterval:   cfg.PollInterval,
 		ReportInterval: cfg.ReportInterval,
-		MetricSrv:      metric.NewProcessor(&memStore),
+		MetricSrv:      metric.NewProcessor(memStore),
 		HashKey:        cfg.SecretKey,
 	}
 
