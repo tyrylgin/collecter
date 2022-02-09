@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -19,6 +20,7 @@ type Service struct {
 	ServerHost     string
 	PollInterval   time.Duration
 	ReportInterval time.Duration
+	HashKey        string
 	MetricSrv      metricService.Processor
 }
 
@@ -70,19 +72,34 @@ func (srv Service) SnapshotMetrics() {
 func (srv Service) SendMetrics() {
 	metrics := srv.MetricSrv.GetAll()
 
+	var reqBody []api.Metric
+
 	for name, metric := range metrics {
 		metricToSend := api.ModelToMetric(name, metric)
-
-		metricJSON, err := json.Marshal(metricToSend)
-		if err != nil {
-			log.Printf("failed to marshal metric %s, %v", name, err)
+		if srv.HashKey != "" {
+			metricToSend.CalcHash(srv.HashKey)
 		}
 
-		resp, err := http.Post(fmt.Sprintf("%s/update/", srv.ServerHost), "application/json", bytes.NewBuffer(metricJSON))
+		reqBody = append(reqBody, metricToSend)
+	}
+
+	reqBodyJSON, err := json.Marshal(reqBody)
+	if err != nil {
+		log.Printf("failed to marshal metrics: %v", err)
+	}
+	resp, err := http.Post(fmt.Sprintf("%s/updates/", srv.ServerHost), "application/json", bytes.NewBuffer(reqBodyJSON))
+	if err != nil {
+		log.Printf("failed to send metrics value %s, %v", reqBodyJSON, err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			log.Printf("failed to send metric value %s, %v", metricJSON, err)
-			continue
+			log.Printf("failed to read response body; %v", err)
+			return
 		}
-		resp.Body.Close()
+		log.Printf("failed to send metrics value; server respond: %v, %s", resp.StatusCode, body)
 	}
 }

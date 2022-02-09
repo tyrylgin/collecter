@@ -3,9 +3,35 @@ POST {{host}}/value/
 Content-Type: application/json
 
 {
-	"id": "Mallocs",
-	"type": "gauge"
+	"id": "TestBatchAPI",
+	"type": "counter"
 }
 
 ### get all metric
 GET {{host}}/
+
+### ping db
+GET {{host}}/ping
+
+### batch update
+POST {{host}}/updates/
+Content-Type: application/json
+
+[
+  {
+    "id": "TestBatchAPI",
+    "type": "counter",
+    "delta": 300
+  },
+  {
+    "id": "TestBatchAPI",
+    "type": "counter",
+    "delta": 800
+  },
+  {
+    "id": "TestBatchAPI",
+    "type": "counter",
+    "delta": 14
+  }
+]
+

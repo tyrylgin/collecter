@@ -25,7 +25,7 @@ func Test_metricHandler_getAll(t *testing.T) {
 		"m2": model.Counter{},
 	})
 	mock.EXPECT().GetAll().Return(model.MetricMap{})
-	rest := &Rest{metricHandler{metricService: mock}}
+	rest := &Rest{metricHandler{metricService: mock}, nil}
 
 	ts := httptest.NewServer(rest.router())
 	defer ts.Close()
@@ -47,7 +47,7 @@ func Test_metricHandler_getMetricValue(t *testing.T) {
 	mock.EXPECT().Get("m2", model.MetricTypeCounter).Return(nil, errors.New("some error"))
 	mock.EXPECT().Get("m3", model.MetricTypeCounter).Return(nil, nil)
 	mock.EXPECT().Get("m4", model.MetricTypeGauge).Return(model.Gauge{}, nil)
-	rest := &Rest{metricHandler{metricService: mock}}
+	rest := &Rest{metricHandler{metricService: mock}, nil}
 
 	ts := httptest.NewServer(rest.router())
 	defer ts.Close()
@@ -84,7 +84,7 @@ func Test_metricHandler_processMetric(t *testing.T) {
 	mock.EXPECT().IncreaseCounter("m2", gomock.Any()).Return(errors.New("some error"))
 	mock.EXPECT().SetGauge("m1", gomock.Any()).Return(nil)
 	mock.EXPECT().SetGauge("m2", gomock.Any()).Return(errors.New("some error"))
-	rest := &Rest{metricHandler{metricService: mock}}
+	rest := &Rest{metricHandler{metricService: mock}, nil}
 
 	ts := httptest.NewServer(rest.router())
 	defer ts.Close()
@@ -147,7 +147,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.
 func Test_metricHandler_processMetricJSON(t *testing.T) {
 	mock := metricmock.NewMockProcessor(gomock.NewController(t))
 	mock.EXPECT().IncreaseCounter("m1", gomock.Any()).Return(nil)
-	rest := &Rest{metricHandler{metricService: mock}}
+	rest := &Rest{metricHandler{metricService: mock}, nil}
 
 	type want struct {
 		code        int
@@ -185,7 +185,7 @@ func Test_metricHandler_processMetricJSON(t *testing.T) {
 func Test_metricHandler_getMetricValueJSON(t *testing.T) {
 	mock := metricmock.NewMockProcessor(gomock.NewController(t))
 	mock.EXPECT().Get("m1", model.MetricTypeCounter).Return(model.Counter{}, nil)
-	rest := &Rest{metricHandler{metricService: mock}}
+	rest := &Rest{metricHandler{metricService: mock}, nil}
 
 	type want struct {
 		code        int

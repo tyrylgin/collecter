@@ -2,7 +2,8 @@ package model
 
 import (
 	"encoding/json"
-	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 type (
@@ -25,7 +26,7 @@ func (t MetricType) Validate() error {
 	case MetricTypeCounter, MetricTypeGauge:
 		return nil
 	default:
-		return fmt.Errorf("unknown MetricType: %s", t)
+		return errors.Errorf("unknown MetricType: %s", t)
 	}
 }
 
@@ -62,13 +63,13 @@ func (mm *MetricMap) UnmarshalJSON(data []byte) error {
 		case string(MetricTypeCounter):
 			counter := Counter{}
 			if err := json.Unmarshal(rawMetric.Metric, &counter); err != nil {
-				return fmt.Errorf("value of type (%T): unmarshal: %w", counter, err)
+				return errors.Errorf("value of type (%T): unmarshal: %v", counter, err)
 			}
 			metrics[name] = counter
 		case string(MetricTypeGauge):
 			gauge := Gauge{}
 			if err := json.Unmarshal(rawMetric.Metric, &gauge); err != nil {
-				return fmt.Errorf("value of type (%T): unmarshal: %w", gauge, err)
+				return errors.Errorf("value of type (%T): unmarshal: %v", gauge, err)
 			}
 			metrics[name] = gauge
 		}
